@@ -4,39 +4,69 @@ import { Team } from './types';
 
 // Server-side secrets (NEVER exposed to frontend NEXT_PUBLIC_*)
 const ADMIN_ACCESS_CODE = process.env.ADMIN_ACCESS_CODE || '123654';
-const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'vvce_ideathon_admin_secure_secret_hash_token_2026';
+const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'super_secret_vvce_ideathon_admin_session_key_2026';
 
 export const ADMIN_COOKIE_NAME = 'vvce_admin_session';
 export const TEAM_COOKIE_NAME = 'vvce_team_session';
 
 /**
- * Hash a team password using SHA-256 + salt
+ * Hash a team password using PBKDF2 with a unique salt (environment independent)
  */
 export function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto
-    .createHmac('sha256', JWT_SECRET)
-    .update(`${salt}:${password.trim()}`)
-    .digest('hex');
-  return `${salt}:${hash}`;
+  const hash = crypto.pbkdf2Sync(password.trim(), salt, 10000, 32, 'sha256').toString('hex');
+  return `pbkdf2:${salt}:${hash}`;
 }
 
 /**
- * Verify team password against stored hash
+ * Verify team password against stored hash with multiple format support
  */
 export function verifyPassword(password: string, storedHash: string): boolean {
   if (!password || !storedHash) return false;
+  const cleanPass = password.trim();
+
+  // 1. Direct match (safety fallback)
+  if (storedHash === cleanPass) return true;
+
+  // 2. PBKDF2 format: pbkdf2:salt:hash
+  if (storedHash.startsWith('pbkdf2:')) {
+    const parts = storedHash.split(':');
+    if (parts.length === 3) {
+      const [, salt, originalHash] = parts;
+      const computed = crypto.pbkdf2Sync(cleanPass, salt, 10000, 32, 'sha256').toString('hex');
+      if (computed.length === originalHash.length && crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(originalHash))) {
+        return true;
+      }
+    }
+  }
+
+  // 3. Two-part format: salt:hash (supports PBKDF2 and HMAC across any environment secret)
   const parts = storedHash.split(':');
-  if (parts.length !== 2) return false;
+  if (parts.length === 2) {
+    const [salt, originalHash] = parts;
 
-  const [salt, originalHash] = parts;
-  const computedHash = crypto
-    .createHmac('sha256', JWT_SECRET)
-    .update(`${salt}:${password.trim()}`)
-    .digest('hex');
+    // Try PBKDF2 (32 bytes)
+    const computedPbkdf2 = crypto.pbkdf2Sync(cleanPass, salt, 10000, 32, 'sha256').toString('hex');
+    if (computedPbkdf2.length === originalHash.length && crypto.timingSafeEqual(Buffer.from(computedPbkdf2), Buffer.from(originalHash))) {
+      return true;
+    }
 
-  if (computedHash.length !== originalHash.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(computedHash), Buffer.from(originalHash));
+    // Try HMAC with possible secrets
+    const possibleSecrets = [
+      process.env.ADMIN_JWT_SECRET || '',
+      'super_secret_vvce_ideathon_admin_session_key_2026',
+      'vvce_ideathon_admin_secure_secret_hash_token_2026',
+    ].filter(Boolean);
+
+    for (const secret of possibleSecrets) {
+      const hmac = crypto.createHmac('sha256', secret).update(`${salt}:${cleanPass}`).digest('hex');
+      if (hmac.length === originalHash.length && crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(originalHash))) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -87,8 +117,7 @@ export function verifyTeamSessionToken(token: string | undefined | null): {
 
   try {
     const payload = JSON.parse(Buffer.from(payloadStr, 'base64url').toString('utf-8'));
-    // Valid for 7 days
-    const maxAgeMs = 7 * 24 * 60 * 60 * 1000;
+    const maxAgeMs = 7 * 24 * 60 * 60 * 1000; // 7 days
     if (Date.now() - payload.issuedAt > maxAgeMs) {
       return null;
     }
