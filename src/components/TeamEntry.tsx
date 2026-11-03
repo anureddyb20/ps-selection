@@ -35,10 +35,15 @@ export default function TeamEntry({ onTeamVerified }: TeamEntryProps) {
         }),
       });
 
-      const data = await res.json();
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
 
-      if (!res.ok || !data.success) {
-        setErrorMessage(data.message || 'Unable to access with Team ID. Please try again.');
+      if (!res.ok || !data?.success) {
+        setErrorMessage(data?.message || 'Unable to access with Team ID. Please try again.');
         setLoading(false);
         return;
       }
@@ -46,7 +51,7 @@ export default function TeamEntry({ onTeamVerified }: TeamEntryProps) {
       onTeamVerified(data.team);
     } catch (err) {
       console.error('Team verification error:', err);
-      setErrorMessage('Network error. Please verify your connection.');
+      setErrorMessage('Network connection error. Please check your connection and retry.');
       setLoading(false);
     }
   };
