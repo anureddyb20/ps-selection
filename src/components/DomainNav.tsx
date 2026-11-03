@@ -26,7 +26,7 @@ export default function DomainNav({
       sub: 'CS-01 to CS-15 (15 Codes)',
       count: 15,
       slots: 30,
-      occupied: domainCounts.CSE_AIML.occupied,
+      occupied: domainCounts?.CSE_AIML?.occupied ?? 0,
       icon: Cpu,
     },
     {
@@ -35,7 +35,7 @@ export default function DomainNav({
       sub: 'EC-01 to EC-10 (10 Codes)',
       count: 10,
       slots: 20,
-      occupied: domainCounts.ECE.occupied,
+      occupied: domainCounts?.ECE?.occupied ?? 0,
       icon: Radio,
     },
     {
@@ -44,7 +44,7 @@ export default function DomainNav({
       sub: 'ME-01 to ME-03 | CE-01 to CE-02',
       count: 5,
       slots: 10,
-      occupied: domainCounts.MECH_CIVIL.occupied,
+      occupied: domainCounts?.MECH_CIVIL?.occupied ?? 0,
       icon: Wrench,
     },
   ];

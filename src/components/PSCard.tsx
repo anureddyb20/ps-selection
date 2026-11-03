@@ -25,7 +25,7 @@ export default function PSCard({
     <div
       className={`rounded-xl p-5 border flex flex-col justify-between transition-all bg-[#0d0d0f] ${
         isFull
-          ? 'opacity-60 border-zinc-850'
+          ? 'opacity-60 border-zinc-800'
           : isOneSlotLeft
           ? 'border-[#FF007F]/40 hover:border-[#FF007F]/80 shadow-[0_0_15px_rgba(255,0,127,0.08)]'
           : 'border-zinc-800 hover:border-zinc-700'
