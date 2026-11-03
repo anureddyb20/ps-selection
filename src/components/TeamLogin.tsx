@@ -195,3 +195,4 @@ export default function TeamLogin({ onLoginSuccess }: TeamLoginProps) {
     </div>
   );
 }
+
