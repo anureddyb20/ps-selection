@@ -16,6 +16,7 @@ import {
 } from './types';
 import { INITIAL_PROBLEM_STATEMENTS } from './constants';
 import { hashPassword, verifyPassword } from './auth';
+import { supabaseAdmin } from './supabase';
 import { EventEmitter } from 'events';
 
 // Realtime Event Bus for Instant Broadcast across Connected Clients
@@ -280,6 +281,7 @@ export async function getPublicProblemStatements(): Promise<{
           occupied < maxSlots;
 
         return {
+          id: ps.id,
           ps_code: ps.ps_code,
           domain: ps.domain,
           sub_domain: ps.sub_domain,
@@ -315,7 +317,8 @@ export async function getPublicProblemStatements(): Promise<{
 
 export interface TeamReservationInput {
   team_id: string; // Authenticated team's internal ID
-  ps_code: string;
+  ps_code?: string;
+  ps_id?: string;
 }
 
 export interface ReserveResult {
@@ -375,25 +378,30 @@ export async function reserveProblemStatementAtomic(
 
     // 4. Find target Problem Statement
     const ps_code = (input.ps_code || '').trim().toUpperCase();
-    const targetPS = state.problem_statements.find((ps) => ps.ps_code === ps_code);
+    const ps_id = (input.ps_id || '').trim();
+    const targetPS = state.problem_statements.find(
+      (ps) =>
+        (ps_code && ps.ps_code.toUpperCase() === ps_code) ||
+        (ps_id && ps.id === ps_id)
+    );
     if (!targetPS) {
       return {
         success: false,
-        message: `Invalid PS Code "${ps_code}". Please select from the official Vice Verse PS codes.`,
+        message: `Invalid PS Code "${ps_code || ps_id}". Please select from the official Vice Verse PS codes.`,
       };
     }
 
     if (!targetPS.is_published) {
       return {
         success: false,
-        message: `Problem Statement ${ps_code} is not currently available for selection.`,
+        message: `Problem Statement ${targetPS.ps_code} is not currently available for selection.`,
       };
     }
 
     if (!targetPS.is_selection_open) {
       return {
         success: false,
-        message: `Selection for Problem Statement ${ps_code} has been paused by administrators.`,
+        message: `Selection for Problem Statement ${targetPS.ps_code} has been paused by administrators.`,
       };
     }
 
@@ -426,6 +434,48 @@ export async function reserveProblemStatementAtomic(
     state.ps_selections.push(newSelection);
     writeState(state);
 
+    // Sync to Supabase if configured
+    if (supabaseAdmin) {
+      try {
+        const { data: sbTeam } = await supabaseAdmin
+          .from('teams')
+          .select('id')
+          .eq('team_id', team.team_id)
+          .maybeSingle();
+
+        let sbTeamId = sbTeam?.id;
+        if (!sbTeamId) {
+          const { data: newSbTeam } = await supabaseAdmin
+            .from('teams')
+            .insert({ team_id: team.team_id, domain: targetPS.domain })
+            .select('id')
+            .maybeSingle();
+          sbTeamId = newSbTeam?.id;
+        }
+
+        const { data: sbPS } = await supabaseAdmin
+          .from('problem_statements')
+          .select('id')
+          .eq('ps_code', targetPS.ps_code)
+          .maybeSingle();
+
+        if (sbTeamId && sbPS?.id) {
+          await supabaseAdmin
+            .from('ps_selections')
+            .upsert(
+              {
+                team_id: sbTeamId,
+                problem_statement_id: sbPS.id,
+                status: 'CONFIRMED',
+              },
+              { onConflict: 'team_id' }
+            );
+        }
+      } catch (sbErr) {
+        console.warn('Supabase sync skipped/warning:', sbErr);
+      }
+    }
+
     const newCount = activeSelectionsForPS.length + 1;
     let newStatus = 'AVAILABLE';
     if (newCount >= maxLimit) {
@@ -436,7 +486,7 @@ export async function reserveProblemStatementAtomic(
 
     // Broadcast realtime event
     notifyChange('selection-created', {
-      ps_code,
+      ps_code: targetPS.ps_code,
       occupied_count: newCount,
       status: newStatus,
       team_name: team.team_name,
@@ -445,8 +495,8 @@ export async function reserveProblemStatementAtomic(
 
     return {
       success: true,
-      message: `Congratulations! PS Code ${ps_code} has been successfully reserved for team "${team.team_name}".`,
-      ps_code,
+      message: `Congratulations! PS Code ${targetPS.ps_code} has been successfully reserved for team "${team.team_name}".`,
+      ps_code: targetPS.ps_code,
       selection_id: newSelectionId,
       selected_at: now,
       occupied_count: newCount,
@@ -626,6 +676,28 @@ export async function adminCancelSelection(selectionId: string): Promise<{ succe
     const team = state.teams.find((t) => t.id === removedSelection.team_id);
 
     writeState(state);
+
+    if (supabaseAdmin && team) {
+      (async () => {
+        try {
+          const { data: sbTeam } = await supabaseAdmin!
+            .from('teams')
+            .select('id')
+            .eq('team_id', team.team_id)
+            .maybeSingle();
+
+          if (sbTeam?.id) {
+            await supabaseAdmin!
+              .from('ps_selections')
+              .delete()
+              .eq('team_id', sbTeam.id);
+          }
+        } catch (err) {
+          console.warn('Supabase cancel sync skipped:', err);
+        }
+      })();
+    }
+
     notifyChange('selection-cancelled', {
       ps_code: targetPS?.ps_code,
       team_name: team?.team_name,

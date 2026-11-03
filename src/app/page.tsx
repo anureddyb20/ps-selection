@@ -37,9 +37,6 @@ export default function HomePage() {
         const data = await res.json();
         if (data.authenticated && data.team) {
           setCurrentTeam(data.team);
-          if (data.team.domain) {
-            setSelectedDomain(data.team.domain);
-          }
         } else {
           setCurrentTeam(null);
         }
@@ -94,9 +91,6 @@ export default function HomePage() {
 
   const handleTeamVerified = (team: TeamPublicProfile) => {
     setCurrentTeam(team);
-    if (team.domain) {
-      setSelectedDomain(team.domain);
-    }
     fetchPSData();
   };
 

@@ -46,6 +46,7 @@ export interface AdminSettings {
 // Sanitized public structure for participating teams:
 // Strictest compliance with Section 2: ONLY PS Code, occupied count, status, selection availability.
 export interface PublicPSItem {
+  id: string;                 // Database ID
   ps_code: string;
   domain: DomainCategory;
   sub_domain: SubDomain | null;

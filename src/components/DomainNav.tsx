@@ -88,6 +88,7 @@ export default function DomainNav({
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => onSelectDomain(item.id)}
               className={`text-left p-5 rounded-xl border relative transition-all duration-200 ${
                 isSelected

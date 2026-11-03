@@ -19,13 +19,13 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { ps_code } = body;
+    const { ps_code, ps_id } = body;
 
-    if (!ps_code) {
+    if (!ps_code && !ps_id) {
       return NextResponse.json(
         {
           success: false,
-          message: 'Problem Statement code is required.',
+          message: 'Problem Statement code or ID is required.',
         },
         { status: 400 }
       );
@@ -34,7 +34,8 @@ export async function POST(req: NextRequest) {
     // 2. Perform Atomic Reservation
     const result = await reserveProblemStatementAtomic({
       team_id: session.id,
-      ps_code,
+      ps_code: ps_code || '',
+      ps_id: ps_id || '',
     });
 
     if (!result.success) {

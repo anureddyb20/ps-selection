@@ -32,6 +32,7 @@ export default function SelectionConfirmModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ps_code: psItem.ps_code,
+          ps_id: psItem.id,
         }),
       });
 

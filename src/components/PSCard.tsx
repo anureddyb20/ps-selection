@@ -21,20 +21,37 @@ export default function PSCard({
   const isOneSlotLeft = item.occupied_count === 1;
   const canSelect = item.is_available && selectionOpen && !isFull && !teamAlreadySelected;
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (canSelect) {
+      e.stopPropagation();
+      onSelect(item);
+    }
+  };
+
   return (
     <div
+      onClick={handleCardClick}
       className={`rounded-xl p-5 border flex flex-col justify-between transition-all bg-[#0d0d0f] ${
+        canSelect
+          ? 'cursor-pointer hover:border-[#FF007F]/70 hover:shadow-[0_0_20px_rgba(255,0,127,0.18)]'
+          : ''
+      } ${
         isFull
           ? 'opacity-60 border-zinc-800'
           : isOneSlotLeft
-          ? 'border-[#FF007F]/40 hover:border-[#FF007F]/80 shadow-[0_0_15px_rgba(255,0,127,0.08)]'
+          ? 'border-[#FF007F]/40 shadow-[0_0_15px_rgba(255,0,127,0.08)]'
           : 'border-zinc-800 hover:border-zinc-700'
       }`}
     >
       <div>
         {/* Card Header: PS Code & Status */}
         <div className="flex items-center justify-between gap-3 mb-4">
-          <span className="text-2xl sm:text-3xl font-mono font-black tracking-wider text-white">
+          <span
+            onClick={handleCardClick}
+            className={`text-2xl sm:text-3xl font-mono font-black tracking-wider text-white ${
+              canSelect ? 'hover:text-[#FF007F] transition-colors cursor-pointer' : ''
+            }`}
+          >
             {item.ps_code}
           </span>
 
@@ -99,7 +116,11 @@ export default function PSCard({
       <div>
         {canSelect ? (
           <button
-            onClick={() => onSelect(item)}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(item);
+            }}
             className="w-full py-2.5 px-4 rounded-xl font-sans font-bold text-xs uppercase tracking-wider bg-[#FF007F] hover:bg-[#ff1a8c] text-white shadow-[0_0_20px_rgba(255,0,127,0.35)] hover:shadow-[0_0_25px_rgba(255,0,127,0.5)] transition-all flex items-center justify-center gap-2 group active:scale-[0.99]"
           >
             <span>SELECT CODE</span>
@@ -107,6 +128,7 @@ export default function PSCard({
           </button>
         ) : isFull ? (
           <button
+            type="button"
             disabled
             className="w-full py-2.5 px-4 rounded-xl font-sans text-xs uppercase tracking-wider bg-[#080808] text-zinc-600 border border-zinc-800/60 cursor-not-allowed flex items-center justify-center gap-1.5"
           >
@@ -114,6 +136,7 @@ export default function PSCard({
           </button>
         ) : teamAlreadySelected ? (
           <button
+            type="button"
             disabled
             className="w-full py-2.5 px-4 rounded-xl font-sans text-xs uppercase tracking-wider bg-[#080808] text-zinc-600 border border-zinc-800/60 cursor-not-allowed flex items-center justify-center gap-1.5"
           >
@@ -121,6 +144,7 @@ export default function PSCard({
           </button>
         ) : (
           <button
+            type="button"
             disabled
             className="w-full py-2.5 px-4 rounded-xl font-sans text-xs uppercase tracking-wider bg-[#080808] text-zinc-600 border border-zinc-800/60 cursor-not-allowed flex items-center justify-center gap-1.5"
           >
