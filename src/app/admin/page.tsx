@@ -24,13 +24,14 @@ import {
   BarChart3,
   Sliders,
   UserPlus,
-  Eye,
-  EyeOff,
   LogOut,
   XCircle,
   Clock,
   Mail,
   Hash,
+  Sparkles,
+  Layers,
+  KeyRound,
 } from 'lucide-react';
 import {
   DashboardStats,
@@ -59,7 +60,6 @@ export default function AdminPage() {
   const [teams, setTeams] = useState<
     (Team & {
       ps_code: string;
-      domain: DomainCategory;
       selected_at: string;
       selection_id: string;
     })[]
@@ -77,16 +77,23 @@ export default function AdminPage() {
   const [teamDomainFilter, setTeamDomainFilter] = useState<string>('ALL');
   const [psDomainFilter, setPsDomainFilter] = useState<string>('ALL');
 
-  // Manual Assignment Modal State
+  // Create Team Account Modal
+  const [createTeamModal, setCreateTeamModal] = useState(false);
+  const [newTeamId, setNewTeamId] = useState('');
+  const [newTeamName, setNewTeamName] = useState('');
+  const [newTeamPassword, setNewTeamPassword] = useState('vvce@2026');
+  const [newTeamDomain, setNewTeamDomain] = useState<DomainCategory>('CSE_AIML');
+  const [newTeamLeader, setNewTeamLeader] = useState('');
+  const [newTeamEmail, setNewTeamEmail] = useState('');
+  const [createTeamError, setCreateTeamError] = useState<string | null>(null);
+
+  // Manual Assign Modal
   const [manualAssignModal, setManualAssignModal] = useState(false);
   const [manualPSCode, setManualPSCode] = useState('');
-  const [manualTeamName, setManualTeamName] = useState('');
-  const [manualRegId, setManualRegId] = useState('');
-  const [manualLeaderName, setManualLeaderName] = useState('');
-  const [manualLeaderEmail, setManualLeaderEmail] = useState('');
+  const [manualTeamId, setManualTeamId] = useState('');
   const [manualAssignError, setManualAssignError] = useState<string | null>(null);
 
-  // Notification Banner
+  // Notification Toast
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
@@ -94,7 +101,6 @@ export default function AdminPage() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  // Fetch admin dashboard data
   const fetchDashboardData = async () => {
     try {
       const res = await fetch('/api/admin', { cache: 'no-store' });
@@ -119,7 +125,6 @@ export default function AdminPage() {
   useEffect(() => {
     fetchDashboardData();
 
-    // Listen to real-time events
     const eventSource = new EventSource('/api/realtime');
     eventSource.addEventListener('update', () => {
       fetchDashboardData();
@@ -147,7 +152,7 @@ export default function AdminPage() {
         setIsAuthenticated(true);
         setAccessCodeInput('');
         fetchDashboardData();
-        showToast('Organizer access granted. Welcome to the Admin Portal.');
+        showToast('Organizer access granted. Welcome to Command Desk.');
       } else {
         setLoginError(data.message || 'Invalid Organizer Access Code. Access Denied.');
       }
@@ -168,7 +173,6 @@ export default function AdminPage() {
     showToast('Logged out securely.');
   };
 
-  // Admin Actions
   const handleTogglePSToggle = async (
     psCode: string,
     field: 'is_published' | 'is_selection_open',
@@ -188,8 +192,6 @@ export default function AdminPage() {
       if (res.ok && data.success) {
         showToast(`PS Code ${psCode} ${field === 'is_published' ? 'visibility' : 'selection'} updated.`);
         fetchDashboardData();
-      } else {
-        showToast(data.message || 'Failed to update PS code.', 'error');
       }
     } catch {
       showToast('Action failed.', 'error');
@@ -218,8 +220,6 @@ export default function AdminPage() {
       if (res.ok && data.success) {
         showToast(data.message);
         fetchDashboardData();
-      } else {
-        showToast(data.message || 'Failed to cancel selection.', 'error');
       }
     } catch {
       showToast('Network error while cancelling selection.', 'error');
@@ -247,6 +247,59 @@ export default function AdminPage() {
     }
   };
 
+  const handleCreateTeamSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateTeamError(null);
+
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create-team',
+          team_id: newTeamId,
+          team_name: newTeamName,
+          password: newTeamPassword,
+          domain: newTeamDomain,
+          leader_name: newTeamLeader,
+          leader_email: newTeamEmail,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(data.message);
+        setCreateTeamModal(false);
+        setNewTeamId('');
+        setNewTeamName('');
+        setNewTeamLeader('');
+        setNewTeamEmail('');
+        fetchDashboardData();
+      } else {
+        setCreateTeamError(data.message || 'Failed to create team account.');
+      }
+    } catch {
+      setCreateTeamError('Network error while creating team account.');
+    }
+  };
+
+  const handleSeedTeams = async () => {
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'seed-teams' }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(data.message);
+        fetchDashboardData();
+      }
+    } catch {
+      showToast('Failed to seed teams.', 'error');
+    }
+  };
+
   const handleManualAssignSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setManualAssignError(null);
@@ -258,10 +311,7 @@ export default function AdminPage() {
         body: JSON.stringify({
           action: 'manual-assign',
           ps_code: manualPSCode,
-          team_name: manualTeamName,
-          registration_id: manualRegId,
-          leader_name: manualLeaderName,
-          leader_email: manualLeaderEmail,
+          team_id: manualTeamId,
         }),
       });
 
@@ -269,13 +319,9 @@ export default function AdminPage() {
       if (res.ok && data.success) {
         showToast(data.message);
         setManualAssignModal(false);
-        setManualTeamName('');
-        setManualRegId('');
-        setManualLeaderName('');
-        setManualLeaderEmail('');
         fetchDashboardData();
       } else {
-        setManualAssignError(data.message || 'Failed to manually assign.');
+        setManualAssignError(data.message || 'Failed to assign team.');
       }
     } catch {
       setManualAssignError('Network error while assigning.');
@@ -307,14 +353,14 @@ export default function AdminPage() {
     }
   };
 
-  // Filtered Teams
+  // Filtered teams
   const filteredTeams = useMemo(() => {
     return teams.filter((t) => {
       const matchesDomain = teamDomainFilter === 'ALL' || t.domain === teamDomainFilter;
       const q = teamSearch.toLowerCase().trim();
       const matchesSearch = q
         ? t.team_name.toLowerCase().includes(q) ||
-          t.registration_id.toLowerCase().includes(q) ||
+          t.team_id.toLowerCase().includes(q) ||
           t.leader_name.toLowerCase().includes(q) ||
           t.leader_email.toLowerCase().includes(q) ||
           t.ps_code.toLowerCase().includes(q)
@@ -323,7 +369,6 @@ export default function AdminPage() {
     });
   }, [teams, teamDomainFilter, teamSearch]);
 
-  // Filtered PS Codes
   const filteredPSCodes = useMemo(() => {
     return problemStatements.filter((p) => {
       if (psDomainFilter === 'ALL') return true;
@@ -331,42 +376,49 @@ export default function AdminPage() {
     });
   }, [problemStatements, psDomainFilter]);
 
-  // If not logged in: Show organizer login
+  // LOGIN SCREEN
   if (!isAuthenticated && !loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
-        <div className="w-full max-w-md p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl relative">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-ops-bg text-white font-mono">
+        <div className="w-full max-w-md ops-panel p-8 rounded-2xl shadow-2xl relative border-ops-border">
+          <div className="absolute top-0 left-6 right-6 h-[2px] bg-gradient-to-r from-transparent via-ops-cyan to-transparent" />
+
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-blue-600/20 text-blue-400 mx-auto flex items-center justify-center mb-4 border border-blue-500/30">
-              <Shield className="w-8 h-8" />
+            <div className="w-14 h-14 rounded-2xl bg-ops-cyan/15 text-ops-cyan mx-auto flex items-center justify-center mb-4 border border-ops-cyan/30">
+              <Shield className="w-7 h-7" />
             </div>
-            <h1 className="text-2xl font-black text-white tracking-tight">Admin Portal</h1>
-            <p className="text-xs text-slate-400 mt-1">
-              VVCE Ideathon 2026 – Organizer Access
+            <span className="text-[11px] font-mono tracking-widest text-ops-cyan uppercase block mb-1">
+              COMMAND ACCESS // 2026
+            </span>
+            <h1 className="text-2xl font-black text-white tracking-tight uppercase">
+              Organizer Admin Desk
+            </h1>
+            <p className="text-xs text-ops-textMuted mt-1">
+              VVCE Ideathon Problem Statement Operations
             </p>
           </div>
 
           {loginError && (
-            <div className="mb-6 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5">
-              <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
-              <span>{loginError}</span>
+            <div className="ops-alert-rejected p-3.5 rounded-xl mb-6 text-xs flex items-center gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-ops-magenta shrink-0" />
+              <span className="text-slate-200">{loginError}</span>
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-                Organizer Access Code
+              <label className="block text-xs font-mono uppercase tracking-wider text-ops-cyan mb-2">
+                Organizer Access Key
               </label>
               <div className="relative">
-                <Key className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Key className="w-4 h-4 text-ops-textMuted absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="password"
                   required
                   placeholder="Enter 6-digit access code"
                   value={accessCodeInput}
                   onChange={(e) => setAccessCodeInput(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 tracking-wider"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-ops-card border border-ops-border text-white placeholder-slate-600 text-sm font-mono tracking-wider focus:outline-none focus:border-ops-cyan"
                 />
               </div>
             </div>
@@ -374,20 +426,20 @@ export default function AdminPage() {
             <button
               type="submit"
               disabled={authLoading}
-              className="w-full py-3.5 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3.5 px-4 rounded-xl font-bold font-mono text-xs uppercase tracking-wider bg-ops-cyan hover:bg-cyan-300 text-slate-950 shadow-cyan-glow transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
             >
               <Lock className="w-4 h-4" />
-              <span>{authLoading ? 'Verifying...' : 'Authenticate Organizer'}</span>
+              <span>{authLoading ? 'Verifying...' : 'Authorize Organizer'}</span>
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-slate-800 text-center">
+          <div className="mt-8 pt-6 border-t border-ops-border text-center">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-ops-textMuted hover:text-ops-cyan transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Return to Public Website</span>
+              <span>Return to Public Desk</span>
             </Link>
           </div>
         </div>
@@ -396,48 +448,44 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-slate-950 text-slate-100">
-      {/* Toast Notification */}
+    <div className="min-h-screen flex flex-col md:flex-row bg-ops-bg text-slate-100 font-sans">
+      {/* Toast Alert */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-semibold animate-slide-up ${
-            toast.type === 'error'
-              ? 'bg-rose-600 text-white'
-              : 'bg-emerald-600 text-white'
+          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-mono font-bold animate-slide-up ${
+            toast.type === 'error' ? 'ops-badge-magenta bg-ops-panel' : 'ops-badge-emerald bg-ops-panel'
           }`}
         >
-          {toast.type === 'error' ? (
-            <XCircle className="w-4 h-4" />
-          ) : (
-            <CheckCircle2 className="w-4 h-4" />
-          )}
+          {toast.type === 'error' ? <XCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
           <span>{toast.text}</span>
         </div>
       )}
 
-      {/* Admin Sidebar Navigation */}
-      <aside className="w-full md:w-64 bg-slate-900 border-r border-slate-800 flex flex-col">
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+      {/* Sidebar Navigation */}
+      <aside className="w-full md:w-64 bg-ops-panel border-r border-ops-border flex flex-col">
+        <div className="p-5 border-b border-ops-border flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white">
+            <div className="w-9 h-9 rounded-xl bg-ops-cyan/15 text-ops-cyan flex items-center justify-center border border-ops-cyan/30">
               <Shield className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-bold text-sm tracking-tight text-white">Admin Portal</h2>
-              <span className="text-[10px] text-blue-400 font-semibold uppercase">
-                VVCE Ideathon 2026
+              <h2 className="font-mono font-bold text-sm tracking-tight text-white uppercase">
+                Admin Desk
+              </h2>
+              <span className="text-[10px] text-ops-cyan font-mono tracking-widest uppercase">
+                VVCE IDEATHON 2026
               </span>
             </div>
           </div>
         </div>
 
-        <nav className="p-4 space-y-1.5 flex-1">
+        <nav className="p-4 space-y-1.5 flex-1 font-mono text-xs">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all ${
               activeTab === 'overview'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                ? 'ops-card-active text-ops-yellow'
+                : 'text-ops-textMuted hover:text-white hover:bg-ops-card'
             }`}
           >
             <BarChart3 className="w-4 h-4" />
@@ -446,52 +494,52 @@ export default function AdminPage() {
 
           <button
             onClick={() => setActiveTab('ps-management')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all ${
               activeTab === 'ps-management'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                ? 'ops-card-active text-ops-yellow'
+                : 'text-ops-textMuted hover:text-white hover:bg-ops-card'
             }`}
           >
             <Cpu className="w-4 h-4" />
-            <span>PS Code Management</span>
+            <span>PS Code Inventory</span>
           </button>
 
           <button
             onClick={() => setActiveTab('teams')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all ${
               activeTab === 'teams'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                ? 'ops-card-active text-ops-yellow'
+                : 'text-ops-textMuted hover:text-white hover:bg-ops-card'
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>Team Management</span>
-            <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300">
+            <span>Team Accounts</span>
+            <span className="ml-auto px-2 py-0.5 rounded text-[10px] bg-ops-card border border-ops-border text-ops-cyan">
               {teams.length}
             </span>
           </button>
 
           <button
             onClick={() => setActiveTab('selections')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all ${
               activeTab === 'selections'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                ? 'ops-card-active text-ops-yellow'
+                : 'text-ops-textMuted hover:text-white hover:bg-ops-card'
             }`}
           >
             <Sliders className="w-4 h-4" />
-            <span>Selection Records</span>
-            <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300">
+            <span>Live Selections</span>
+            <span className="ml-auto px-2 py-0.5 rounded text-[10px] bg-ops-card border border-ops-border text-ops-emerald">
               {selections.length}
             </span>
           </button>
 
           <button
             onClick={() => setActiveTab('settings')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all ${
               activeTab === 'settings'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                ? 'ops-card-active text-ops-yellow'
+                : 'text-ops-textMuted hover:text-white hover:bg-ops-card'
             }`}
           >
             <Settings className="w-4 h-4" />
@@ -500,18 +548,18 @@ export default function AdminPage() {
         </nav>
 
         {/* Bottom controls */}
-        <div className="p-4 border-t border-slate-800 space-y-2">
+        <div className="p-4 border-t border-ops-border space-y-2 font-mono text-xs">
           <Link
             href="/"
-            className="w-full flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
+            className="w-full flex items-center gap-2 px-3.5 py-2 rounded-xl text-ops-textMuted hover:text-white hover:bg-ops-card transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Public Website</span>
+            <span>Public Team Desk</span>
           </Link>
 
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
+            className="w-full flex items-center gap-2 px-3.5 py-2 rounded-xl text-ops-magenta hover:bg-ops-magenta/10 transition-colors"
           >
             <LogOut className="w-4 h-4" />
             <span>Organizer Logout</span>
@@ -521,140 +569,132 @@ export default function AdminPage() {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-y-auto">
-        {/* Top bar */}
-        <header className="h-16 border-b border-slate-800 bg-slate-900/40 px-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h2 className="font-bold text-lg text-white">
-              {activeTab === 'overview' && 'Dashboard Overview & Statistics'}
-              {activeTab === 'ps-management' && 'Problem Statement Management (All 30 Predefined Codes)'}
-              {activeTab === 'teams' && 'Registered Teams'}
-              {activeTab === 'selections' && 'Problem Statement Selections'}
-              {activeTab === 'settings' && 'Portal Controls & Configuration'}
-            </h2>
-          </div>
+        <header className="h-16 border-b border-ops-border bg-ops-panel/60 px-6 flex items-center justify-between">
+          <h2 className="font-mono font-bold text-sm tracking-wider uppercase text-white">
+            {activeTab === 'overview' && 'SYSTEM OVERVIEW // LIVE TELEMETRY'}
+            {activeTab === 'ps-management' && 'INVENTORY // 30 PREDEFINED PROBLEM STATEMENTS'}
+            {activeTab === 'teams' && 'TEAM ACCOUNTS & CREDENTIALS'}
+            {activeTab === 'selections' && 'SELECTION ALLOCATIONS'}
+            {activeTab === 'settings' && 'SYSTEM CONTROLS & DESK POLICIES'}
+          </h2>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={fetchDashboardData}
-              title="Refresh Data"
-              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            onClick={fetchDashboardData}
+            title="Refresh Data"
+            className="p-2 rounded-xl bg-ops-card border border-ops-border text-ops-textMuted hover:text-white hover:border-ops-cyan transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
         </header>
 
-        <div className="p-6 flex-1 space-y-6">
+        <div className="p-6 sm:p-8 flex-1 space-y-6">
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && stats && (
             <div className="space-y-6">
               {/* Primary Metric Cards */}
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <div className="ops-card p-4 rounded-xl border">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-ops-textMuted">
                     Total PS Codes
                   </span>
-                  <div className="text-2xl font-black text-white mt-1">
+                  <div className="text-2xl font-mono font-black text-white mt-1">
                     {stats.total_ps_codes}
                   </div>
-                  <span className="text-[10px] text-slate-400">Exact 30 Initialized</span>
+                  <span className="text-[10px] font-mono text-ops-cyan">Exact 30 Preserved</span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Registered Teams
+                <div className="ops-card p-4 rounded-xl border">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-ops-textMuted">
+                    Team Accounts
                   </span>
-                  <div className="text-2xl font-black text-blue-400 mt-1">
+                  <div className="text-2xl font-mono font-black text-ops-cyan mt-1">
                     {stats.total_registered_teams}
                   </div>
-                  <span className="text-[10px] text-slate-400">Unique Team IDs</span>
+                  <span className="text-[10px] font-mono text-slate-400">Unique Credentials</span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Successful Selections
+                <div className="ops-card p-4 rounded-xl border">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-ops-textMuted">
+                    Claimed Slots
                   </span>
-                  <div className="text-2xl font-black text-emerald-400 mt-1">
+                  <div className="text-2xl font-mono font-black text-ops-emerald mt-1">
                     {stats.total_selections}
                   </div>
-                  <span className="text-[10px] text-slate-400">Out of 60 Max Slots</span>
+                  <span className="text-[10px] font-mono text-slate-400">Of 60 Max Capacity</span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Available Codes
+                <div className="ops-card p-4 rounded-xl border">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-ops-textMuted">
+                    Available (0/2)
                   </span>
-                  <div className="text-2xl font-black text-emerald-400 mt-1">
+                  <div className="text-2xl font-mono font-black text-ops-cyan mt-1">
                     {stats.available_ps_codes}
                   </div>
-                  <span className="text-[10px] text-emerald-400/80">0 of 2 Filled</span>
+                  <span className="text-[10px] font-mono text-ops-cyan">Both Slots Open</span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Partially Booked
+                <div className="ops-card p-4 rounded-xl border">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-ops-textMuted">
+                    Partial (1/2)
                   </span>
-                  <div className="text-2xl font-black text-amber-400 mt-1">
+                  <div className="text-2xl font-mono font-black text-ops-yellow mt-1">
                     {stats.partially_booked_ps_codes}
                   </div>
-                  <span className="text-[10px] text-amber-400/80">1 of 2 Filled</span>
+                  <span className="text-[10px] font-mono text-ops-yellow">1 Slot Left</span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Fully Booked
+                <div className="ops-card p-4 rounded-xl border">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-ops-textMuted">
+                    Full (2/2)
                   </span>
-                  <div className="text-2xl font-black text-rose-400 mt-1">
+                  <div className="text-2xl font-mono font-black text-ops-magenta mt-1">
                     {stats.fully_booked_ps_codes}
                   </div>
-                  <span className="text-[10px] text-rose-400/80">2 of 2 Full</span>
+                  <span className="text-[10px] font-mono text-ops-magenta">Locked Capacity</span>
                 </div>
               </div>
 
-              {/* Domain-wise Statistics (Section 7) */}
+              {/* Domain Breakdown */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Domain 1: CSE / AIML */}
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                {/* CSE / AIML */}
+                <div className="ops-panel p-6 rounded-2xl border space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-ops-border">
                     <div className="flex items-center gap-2.5">
-                      <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                        <Cpu className="w-5 h-5" />
-                      </div>
+                      <Cpu className="w-5 h-5 text-ops-cyan" />
                       <div>
-                        <h4 className="font-bold text-white text-sm">CSE / AIML</h4>
-                        <span className="text-[11px] text-slate-400">CS-01 to CS-15</span>
+                        <h4 className="font-mono font-bold text-white text-sm">CSE / AIML</h4>
+                        <span className="text-[10px] font-mono text-ops-textMuted">CS-01 to CS-15</span>
                       </div>
                     </div>
-                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-slate-800 text-blue-300">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded ops-badge-cyan">
                       15 Codes
                     </span>
                   </div>
 
-                  <div className="space-y-2 text-xs">
+                  <div className="space-y-2 text-xs font-mono">
                     <div className="flex justify-between text-slate-300">
-                      <span>Selected Teams:</span>
+                      <span>Occupied Slots:</span>
                       <span className="font-bold text-white">
-                        {stats.domains.CSE_AIML.selected_teams} / 30 Slots
+                        {stats.domains.CSE_AIML.selected_teams} / 30
                       </span>
                     </div>
                     <div className="flex justify-between text-slate-300">
-                      <span>Available Codes (0/2):</span>
-                      <span className="font-semibold text-emerald-400">
+                      <span>Available (0/2):</span>
+                      <span className="text-ops-cyan font-bold">
                         {stats.domains.CSE_AIML.available_codes}
                       </span>
                     </div>
                     <div className="flex justify-between text-slate-300">
-                      <span>Full Codes (2/2):</span>
-                      <span className="font-semibold text-rose-400">
+                      <span>Fully Booked (2/2):</span>
+                      <span className="text-ops-magenta font-bold">
                         {stats.domains.CSE_AIML.full_codes}
                       </span>
                     </div>
                   </div>
 
-                  {/* Progress Bar */}
-                  <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div className="w-full bg-ops-card h-2 rounded-full overflow-hidden border border-ops-border/60">
                     <div
-                      className="bg-blue-500 h-full rounded-full transition-all"
+                      className="bg-ops-cyan h-full transition-all"
                       style={{
                         width: `${(stats.domains.CSE_AIML.selected_teams / 30) * 100}%`,
                       }}
@@ -662,47 +702,45 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* Domain 2: ECE */}
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                {/* ECE */}
+                <div className="ops-panel p-6 rounded-2xl border space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-ops-border">
                     <div className="flex items-center gap-2.5">
-                      <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                        <Radio className="w-5 h-5" />
-                      </div>
+                      <Radio className="w-5 h-5 text-ops-cyan" />
                       <div>
-                        <h4 className="font-bold text-white text-sm">Electronics & Comm</h4>
-                        <span className="text-[11px] text-slate-400">EC-01 to EC-10</span>
+                        <h4 className="font-mono font-bold text-white text-sm">ELECTRONICS & COMM</h4>
+                        <span className="text-[10px] font-mono text-ops-textMuted">EC-01 to EC-10</span>
                       </div>
                     </div>
-                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-slate-800 text-indigo-300">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded ops-badge-cyan">
                       10 Codes
                     </span>
                   </div>
 
-                  <div className="space-y-2 text-xs">
+                  <div className="space-y-2 text-xs font-mono">
                     <div className="flex justify-between text-slate-300">
-                      <span>Selected Teams:</span>
+                      <span>Occupied Slots:</span>
                       <span className="font-bold text-white">
-                        {stats.domains.ECE.selected_teams} / 20 Slots
+                        {stats.domains.ECE.selected_teams} / 20
                       </span>
                     </div>
                     <div className="flex justify-between text-slate-300">
-                      <span>Available Codes (0/2):</span>
-                      <span className="font-semibold text-emerald-400">
+                      <span>Available (0/2):</span>
+                      <span className="text-ops-cyan font-bold">
                         {stats.domains.ECE.available_codes}
                       </span>
                     </div>
                     <div className="flex justify-between text-slate-300">
-                      <span>Full Codes (2/2):</span>
-                      <span className="font-semibold text-rose-400">
+                      <span>Fully Booked (2/2):</span>
+                      <span className="text-ops-magenta font-bold">
                         {stats.domains.ECE.full_codes}
                       </span>
                     </div>
                   </div>
 
-                  <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div className="w-full bg-ops-card h-2 rounded-full overflow-hidden border border-ops-border/60">
                     <div
-                      className="bg-indigo-500 h-full rounded-full transition-all"
+                      className="bg-ops-cyan h-full transition-all"
                       style={{
                         width: `${(stats.domains.ECE.selected_teams / 20) * 100}%`,
                       }}
@@ -710,47 +748,45 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                {/* Domain 3: Mechanical and Civil */}
-                <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                {/* Mech & Civil */}
+                <div className="ops-panel p-6 rounded-2xl border space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-ops-border">
                     <div className="flex items-center gap-2.5">
-                      <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                        <Wrench className="w-5 h-5" />
-                      </div>
+                      <Wrench className="w-5 h-5 text-ops-yellow" />
                       <div>
-                        <h4 className="font-bold text-white text-sm">Mechanical & Civil</h4>
-                        <span className="text-[11px] text-slate-400">ME (3) + CE (2)</span>
+                        <h4 className="font-mono font-bold text-white text-sm">MECHANICAL & CIVIL</h4>
+                        <span className="text-[10px] font-mono text-ops-textMuted">ME (3) + CE (2)</span>
                       </div>
                     </div>
-                    <span className="text-xs font-bold font-mono px-2 py-0.5 rounded bg-slate-800 text-amber-300">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded ops-badge-yellow">
                       5 Codes
                     </span>
                   </div>
 
-                  <div className="space-y-2 text-xs">
+                  <div className="space-y-2 text-xs font-mono">
                     <div className="flex justify-between text-slate-300">
-                      <span>Selected Teams:</span>
+                      <span>Occupied Slots:</span>
                       <span className="font-bold text-white">
-                        {stats.domains.MECH_CIVIL.selected_teams} / 10 Slots
+                        {stats.domains.MECH_CIVIL.selected_teams} / 10
                       </span>
                     </div>
                     <div className="flex justify-between text-slate-300">
-                      <span>Available Codes (0/2):</span>
-                      <span className="font-semibold text-emerald-400">
+                      <span>Available (0/2):</span>
+                      <span className="text-ops-cyan font-bold">
                         {stats.domains.MECH_CIVIL.available_codes}
                       </span>
                     </div>
                     <div className="flex justify-between text-slate-300">
-                      <span>Full Codes (2/2):</span>
-                      <span className="font-semibold text-rose-400">
+                      <span>Fully Booked (2/2):</span>
+                      <span className="text-ops-magenta font-bold">
                         {stats.domains.MECH_CIVIL.full_codes}
                       </span>
                     </div>
                   </div>
 
-                  <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div className="w-full bg-ops-card h-2 rounded-full overflow-hidden border border-ops-border/60">
                     <div
-                      className="bg-amber-500 h-full rounded-full transition-all"
+                      className="bg-ops-yellow h-full transition-all"
                       style={{
                         width: `${(stats.domains.MECH_CIVIL.selected_teams / 10) * 100}%`,
                       }}
@@ -761,16 +797,16 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* TAB 2: PS CODE MANAGEMENT (Section 8) */}
+          {/* TAB 2: PS CODE MANAGEMENT */}
           {activeTab === 'ps-management' && (
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-300">Filter by Domain:</span>
+            <div className="space-y-4 font-mono">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl ops-panel border">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-ops-cyan font-bold uppercase">Domain Filter:</span>
                   <select
                     value={psDomainFilter}
                     onChange={(e) => setPsDomainFilter(e.target.value)}
-                    className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white"
+                    className="px-3 py-1.5 rounded-lg bg-ops-card border border-ops-border text-xs text-white"
                   >
                     <option value="ALL">All Domains (30 Codes)</option>
                     <option value="CSE_AIML">CSE / AIML (15 Codes)</option>
@@ -778,44 +814,39 @@ export default function AdminPage() {
                     <option value="MECH_CIVIL">Mechanical & Civil (5 Codes)</option>
                   </select>
                 </div>
-
-                <div className="text-xs text-slate-400">
-                  Showing {filteredPSCodes.length} of {problemStatements.length} predefined PS codes
+                <div className="text-xs text-ops-textMuted">
+                  Showing {filteredPSCodes.length} of 30 Predefined Codes
                 </div>
               </div>
 
-              {/* PS Code Table */}
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-xl">
+              <div className="rounded-xl ops-panel border overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                    <thead className="bg-ops-card text-ops-textMuted uppercase border-b border-ops-border text-[10px] tracking-wider">
                       <tr>
-                        <th className="py-3 px-4">PS Code</th>
+                        <th className="py-3 px-4">Code</th>
                         <th className="py-3 px-4">Domain</th>
                         <th className="py-3 px-4">Sub Domain</th>
                         <th className="py-3 px-4">Occupancy</th>
                         <th className="py-3 px-4">Assigned Teams</th>
                         <th className="py-3 px-4">Visibility</th>
                         <th className="py-3 px-4">Selection</th>
-                        <th className="py-3 px-4">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60 text-slate-200">
+                    <tbody className="divide-y divide-ops-border text-slate-200">
                       {filteredPSCodes.map((ps) => (
-                        <tr key={ps.id} className="hover:bg-slate-800/40 transition-colors">
-                          <td className="py-3 px-4 font-mono font-bold text-sm text-blue-400">
-                            {ps.ps_code}
-                          </td>
+                        <tr key={ps.id} className="hover:bg-ops-card/40 transition-colors">
+                          <td className="py-3 px-4 font-bold text-sm text-ops-cyan">{ps.ps_code}</td>
                           <td className="py-3 px-4">{ps.domain}</td>
                           <td className="py-3 px-4">{ps.sub_domain || '—'}</td>
                           <td className="py-3 px-4">
                             <span
-                              className={`px-2 py-0.5 rounded font-mono font-semibold ${
+                              className={`px-2 py-0.5 rounded font-bold ${
                                 ps.occupied_count >= 2
-                                  ? 'bg-rose-500/10 text-rose-400'
+                                  ? 'ops-badge-magenta'
                                   : ps.occupied_count === 1
-                                  ? 'bg-amber-500/10 text-amber-300'
-                                  : 'bg-emerald-500/10 text-emerald-400'
+                                  ? 'ops-badge-yellow'
+                                  : 'ops-badge-cyan'
                               }`}
                             >
                               {ps.occupied_count} / 2
@@ -825,13 +856,13 @@ export default function AdminPage() {
                             {ps.teams.length > 0 ? (
                               <div className="space-y-1">
                                 {ps.teams.map((t, idx) => (
-                                  <div key={idx} className="font-semibold text-white">
-                                    • {t.team_name} ({t.registration_id})
+                                  <div key={idx} className="font-bold text-white">
+                                    • {t.team_id} ({t.team_name})
                                   </div>
                                 ))}
                               </div>
                             ) : (
-                              <span className="text-slate-400 italic">No teams assigned</span>
+                              <span className="text-slate-600 italic">Open (0 teams)</span>
                             )}
                           </td>
                           <td className="py-3 px-4">
@@ -839,10 +870,8 @@ export default function AdminPage() {
                               onClick={() =>
                                 handleTogglePSToggle(ps.ps_code, 'is_published', ps.is_published)
                               }
-                              className={`px-2.5 py-1 rounded text-[11px] font-semibold flex items-center gap-1 ${
-                                ps.is_published
-                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                  : 'bg-slate-800 text-slate-400 border border-slate-700'
+                              className={`px-2.5 py-1 rounded text-[10px] font-bold ${
+                                ps.is_published ? 'ops-badge-emerald' : 'bg-ops-card text-slate-500'
                               }`}
                             >
                               {ps.is_published ? 'Published' : 'Hidden'}
@@ -857,28 +886,12 @@ export default function AdminPage() {
                                   ps.is_selection_open
                                 )
                               }
-                              className={`px-2.5 py-1 rounded text-[11px] font-semibold flex items-center gap-1 ${
-                                ps.is_selection_open
-                                  ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                                  : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                              className={`px-2.5 py-1 rounded text-[10px] font-bold ${
+                                ps.is_selection_open ? 'ops-badge-cyan' : 'ops-badge-magenta'
                               }`}
                             >
-                              {ps.is_selection_open ? 'Open' : 'Paused'}
+                              {ps.is_selection_open ? 'Active' : 'Paused'}
                             </button>
-                          </td>
-                          <td className="py-3 px-4">
-                            {ps.occupied_count < 2 && (
-                              <button
-                                onClick={() => {
-                                  setManualPSCode(ps.ps_code);
-                                  setManualAssignModal(true);
-                                }}
-                                className="px-2.5 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 font-semibold text-[11px] border border-indigo-500/30 flex items-center gap-1"
-                              >
-                                <UserPlus className="w-3 h-3" />
-                                <span>Assign</span>
-                              </button>
-                            )}
                           </td>
                         </tr>
                       ))}
@@ -889,26 +902,26 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* TAB 3: TEAM MANAGEMENT (Section 9) */}
+          {/* TAB 3: TEAM ACCOUNTS MANAGEMENT */}
           {activeTab === 'teams' && (
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900 border border-slate-800">
+            <div className="space-y-4 font-mono">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl ops-panel border">
                 <div className="flex flex-wrap items-center gap-3 flex-1">
                   <div className="relative flex-1 max-w-xs">
-                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Search className="w-4 h-4 text-ops-textMuted absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
-                      placeholder="Search team, reg ID, leader..."
+                      placeholder="Search team ID, name..."
                       value={teamSearch}
                       onChange={(e) => setTeamSearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500"
+                      className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-ops-card border border-ops-border text-xs text-white"
                     />
                   </div>
 
                   <select
                     value={teamDomainFilter}
                     onChange={(e) => setTeamDomainFilter(e.target.value)}
-                    className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white"
+                    className="px-3 py-1.5 rounded-lg bg-ops-card border border-ops-border text-xs text-white"
                   >
                     <option value="ALL">All Domains</option>
                     <option value="CSE_AIML">CSE / AIML</option>
@@ -917,79 +930,85 @@ export default function AdminPage() {
                   </select>
                 </div>
 
-                {/* CSV & Excel Exports (Prompt Section 9) */}
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCreateTeamModal(true)}
+                    className="px-3 py-1.5 rounded-lg bg-ops-cyan text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-cyan-glow"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Create Team</span>
+                  </button>
+
+                  <button
+                    onClick={handleSeedTeams}
+                    className="px-3 py-1.5 rounded-lg bg-ops-card hover:bg-ops-cardHover border border-ops-border text-slate-200 text-xs font-bold"
+                    title="Seed Default Demo Teams"
+                  >
+                    <span>Seed Demo Teams</span>
+                  </button>
+
                   <a
                     href="/api/export?format=csv"
-                    className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 border border-slate-700 transition-colors"
+                    className="px-3 py-1.5 rounded-lg bg-ops-card hover:bg-ops-cardHover border border-ops-border text-slate-200 text-xs font-bold flex items-center gap-1"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Export CSV</span>
+                    <span>CSV</span>
                   </a>
 
                   <a
                     href="/api/export?format=excel"
-                    className="px-3 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 text-xs font-semibold flex items-center gap-1.5 border border-emerald-500/30 transition-colors"
+                    className="px-3 py-1.5 rounded-lg ops-badge-emerald font-bold text-xs flex items-center gap-1"
                   >
                     <FileSpreadsheet className="w-3.5 h-3.5" />
-                    <span>Export Excel</span>
+                    <span>Excel</span>
                   </a>
                 </div>
               </div>
 
               {/* Team Table */}
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-xl">
+              <div className="rounded-xl ops-panel border overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                    <thead className="bg-ops-card text-ops-textMuted uppercase border-b border-ops-border text-[10px] tracking-wider">
                       <tr>
+                        <th className="py-3 px-4">Team ID</th>
                         <th className="py-3 px-4">Team Name</th>
-                        <th className="py-3 px-4">Registration ID</th>
+                        <th className="py-3 px-4">Domain</th>
                         <th className="py-3 px-4">Leader Name</th>
                         <th className="py-3 px-4">Leader Email</th>
-                        <th className="py-3 px-4">Domain</th>
-                        <th className="py-3 px-4">PS Code</th>
-                        <th className="py-3 px-4">Timestamp</th>
-                        <th className="py-3 px-4">Action</th>
+                        <th className="py-3 px-4">Selected PS</th>
+                        <th className="py-3 px-4">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60 text-slate-200">
+                    <tbody className="divide-y divide-ops-border text-slate-200">
                       {filteredTeams.length > 0 ? (
                         filteredTeams.map((t) => (
-                          <tr key={t.id} className="hover:bg-slate-800/40 transition-colors">
+                          <tr key={t.id} className="hover:bg-ops-card/40 transition-colors">
+                            <td className="py-3 px-4 font-bold text-ops-yellow">{t.team_id}</td>
                             <td className="py-3 px-4 font-bold text-white">{t.team_name}</td>
-                            <td className="py-3 px-4 font-mono font-semibold text-blue-300">
-                              {t.registration_id}
-                            </td>
-                            <td className="py-3 px-4">{t.leader_name}</td>
-                            <td className="py-3 px-4 font-mono text-slate-300">{t.leader_email}</td>
                             <td className="py-3 px-4">{t.domain}</td>
-                            <td className="py-3 px-4 font-mono font-bold text-blue-400">
-                              {t.ps_code}
-                            </td>
-                            <td className="py-3 px-4 font-mono text-slate-400">
-                              {new Date(t.selected_at).toLocaleTimeString('en-IN', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
+                            <td className="py-3 px-4">{t.leader_name}</td>
+                            <td className="py-3 px-4 text-slate-400">{t.leader_email}</td>
+                            <td className="py-3 px-4 font-bold text-ops-cyan">
+                              {t.ps_code !== 'N/A' ? t.ps_code : '—'}
                             </td>
                             <td className="py-3 px-4">
-                              <button
-                                onClick={() =>
-                                  handleCancelSelection(t.selection_id, t.team_name, t.ps_code)
-                                }
-                                className="px-2 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[11px] font-semibold border border-rose-500/20 flex items-center gap-1"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                                <span>Cancel</span>
-                              </button>
+                              {t.ps_code !== 'N/A' ? (
+                                <span className="ops-badge-emerald px-2 py-0.5 rounded text-[10px] font-bold">
+                                  ALLOCATED
+                                </span>
+                              ) : (
+                                <span className="ops-badge-yellow px-2 py-0.5 rounded text-[10px] font-bold">
+                                  PENDING
+                                </span>
+                              )}
                             </td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={8} className="py-8 text-center text-slate-400 italic">
-                            No registered teams found.
+                          <td colSpan={7} className="py-8 text-center text-slate-500 italic">
+                            No team accounts found.
                           </td>
                         </tr>
                       )}
@@ -1000,14 +1019,16 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* TAB 4: SELECTION MANAGEMENT (Section 10) */}
+          {/* TAB 4: SELECTIONS MANAGEMENT */}
           {activeTab === 'selections' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-900 border border-slate-800">
+            <div className="space-y-4 font-mono">
+              <div className="flex items-center justify-between p-4 rounded-xl ops-panel border">
                 <div>
-                  <h3 className="font-bold text-white text-sm">Problem Statement Selections</h3>
-                  <p className="text-xs text-slate-400">
-                    Active allocations. Admin can cancel a team selection to reopen slots or manually assign teams.
+                  <h3 className="font-bold text-white text-xs uppercase tracking-wider">
+                    Confirmed PS Allocations
+                  </h3>
+                  <p className="text-[11px] text-ops-textMuted mt-0.5">
+                    Cancel a selection to immediately reopen its slot for another team.
                   </p>
                 </div>
 
@@ -1016,57 +1037,52 @@ export default function AdminPage() {
                     setManualPSCode('CS-01');
                     setManualAssignModal(true);
                   }}
-                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-blue-500/20"
+                  className="px-3.5 py-2 rounded-xl bg-ops-cyan text-slate-950 font-bold text-xs flex items-center gap-2 shadow-cyan-glow"
                 >
-                  <UserPlus className="w-4 h-4" />
-                  <span>Manual Assign Team</span>
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Manual Assign Slot</span>
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-xl">
+              <div className="rounded-xl ops-panel border overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                    <thead className="bg-ops-card text-ops-textMuted uppercase border-b border-ops-border text-[10px] tracking-wider">
                       <tr>
                         <th className="py-3 px-4">PS Code</th>
                         <th className="py-3 px-4">Domain</th>
+                        <th className="py-3 px-4">Team ID</th>
                         <th className="py-3 px-4">Team Name</th>
-                        <th className="py-3 px-4">Registration ID</th>
                         <th className="py-3 px-4">Leader Name</th>
-                        <th className="py-3 px-4">Leader Email</th>
                         <th className="py-3 px-4">Timestamp</th>
                         <th className="py-3 px-4">Status</th>
-                        <th className="py-3 px-4">Actions</th>
+                        <th className="py-3 px-4">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/60 text-slate-200">
+                    <tbody className="divide-y divide-ops-border text-slate-200">
                       {selections.length > 0 ? (
                         selections.map((s) => (
-                          <tr key={s.id} className="hover:bg-slate-800/40 transition-colors">
-                            <td className="py-3 px-4 font-mono font-bold text-blue-400 text-sm">
-                              {s.ps_code}
-                            </td>
+                          <tr key={s.id} className="hover:bg-ops-card/40 transition-colors">
+                            <td className="py-3 px-4 font-bold text-ops-cyan text-sm">{s.ps_code}</td>
                             <td className="py-3 px-4">{s.domain}</td>
+                            <td className="py-3 px-4 font-bold text-ops-yellow">{s.team_code}</td>
                             <td className="py-3 px-4 font-bold text-white">{s.team_name}</td>
-                            <td className="py-3 px-4 font-mono text-blue-300">
-                              {s.registration_id}
-                            </td>
                             <td className="py-3 px-4">{s.leader_name}</td>
-                            <td className="py-3 px-4 font-mono text-slate-300">{s.leader_email}</td>
-                            <td className="py-3 px-4 font-mono text-slate-400">
-                              {new Date(s.selected_at).toLocaleString('en-IN', {
-                                timeZone: 'Asia/Kolkata',
+                            <td className="py-3 px-4 text-slate-400">
+                              {new Date(s.selected_at).toLocaleTimeString('en-IN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
                               })}
                             </td>
                             <td className="py-3 px-4">
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              <span className="ops-badge-emerald px-2 py-0.5 rounded text-[10px] font-bold">
                                 {s.status}
                               </span>
                             </td>
                             <td className="py-3 px-4">
                               <button
                                 onClick={() => handleCancelSelection(s.id, s.team_name, s.ps_code)}
-                                className="px-2.5 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[11px] font-semibold border border-rose-500/20 flex items-center gap-1"
+                                className="px-2 py-1 rounded ops-badge-magenta text-[10px] font-bold flex items-center gap-1"
                               >
                                 <Trash2 className="w-3 h-3" />
                                 <span>Cancel Slot</span>
@@ -1076,7 +1092,7 @@ export default function AdminPage() {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={9} className="py-8 text-center text-slate-400 italic">
+                          <td colSpan={8} className="py-8 text-center text-slate-500 italic">
                             No confirmed selections yet.
                           </td>
                         </tr>
@@ -1088,105 +1104,101 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* TAB 5: PORTAL CONTROLS & SETTINGS (Section 11) */}
+          {/* TAB 5: PORTAL CONTROLS */}
           {activeTab === 'settings' && settings && (
-            <div className="space-y-6 max-w-4xl">
-              {/* Global Controls */}
-              <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-6">
+            <div className="space-y-6 max-w-4xl font-mono">
+              <div className="ops-panel p-6 rounded-2xl border space-y-6">
                 <div>
-                  <h3 className="font-bold text-base text-white">Global Portal Controls</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Toggle portal availability and submission acceptance in real-time.
+                  <h3 className="font-bold text-sm text-white uppercase tracking-wider">
+                    Global Desk Policies
+                  </h3>
+                  <p className="text-xs text-ops-textMuted mt-0.5">
+                    Real-time toggles to publish portal or suspend submissions.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Publish Portal */}
-                  <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                  <div className="p-4 rounded-xl bg-ops-card border border-ops-border flex items-center justify-between">
                     <div>
-                      <span className="font-bold text-white text-sm block">
+                      <span className="font-bold text-white text-xs block uppercase">
                         Publish Entire Portal
                       </span>
-                      <span className="text-xs text-slate-400">
-                        {settings.portal_published
-                          ? 'Portal is currently LIVE and visible'
-                          : 'Portal is currently UNPUBLISHED'}
+                      <span className="text-[11px] text-ops-textMuted">
+                        {settings.portal_published ? 'Portal LIVE & reachable' : 'Portal OFFLINE'}
                       </span>
                     </div>
                     <button
                       onClick={() =>
                         handleToggleSetting('portal_published', settings.portal_published)
                       }
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
                         settings.portal_published
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-slate-800 text-slate-400'
+                          ? 'ops-badge-emerald'
+                          : 'bg-ops-panel text-slate-500'
                       }`}
                     >
-                      {settings.portal_published ? 'Published' : 'Unpublished'}
+                      {settings.portal_published ? 'ONLINE' : 'OFFLINE'}
                     </button>
                   </div>
 
-                  {/* Selection Open / Closed */}
-                  <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                  <div className="p-4 rounded-xl bg-ops-card border border-ops-border flex items-center justify-between">
                     <div>
-                      <span className="font-bold text-white text-sm block">
-                        Problem Statement Selection
+                      <span className="font-bold text-white text-xs block uppercase">
+                        PS Selection Acceptance
                       </span>
-                      <span className="text-xs text-slate-400">
-                        {settings.selection_open
-                          ? 'Accepting team reservations'
-                          : 'Reservations are PAUSED'}
+                      <span className="text-[11px] text-ops-textMuted">
+                        {settings.selection_open ? 'Accepting reservations' : 'Reservations PAUSED'}
                       </span>
                     </div>
                     <button
                       onClick={() =>
                         handleToggleSetting('selection_open', settings.selection_open)
                       }
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
                         settings.selection_open
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-rose-600 text-white'
+                          ? 'ops-badge-cyan'
+                          : 'ops-badge-magenta'
                       }`}
                     >
-                      {settings.selection_open ? 'Selection Open' : 'Selection Closed'}
+                      {settings.selection_open ? 'SELECTION OPEN' : 'SELECTION CLOSED'}
                     </button>
                   </div>
                 </div>
 
-                {/* Rules Display */}
-                <div className="pt-4 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
-                    <span className="text-slate-400 block mb-1">Max Teams Per PS Code:</span>
-                    <span className="font-bold font-mono text-amber-400 text-base">
-                      {settings.max_teams_per_ps} Teams (Hardcoded strict limit)
+                <div className="pt-4 border-t border-ops-border grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div className="p-3.5 rounded-xl bg-ops-card border border-ops-border">
+                    <span className="text-ops-textMuted block mb-1">Max Teams Per Code:</span>
+                    <span className="font-bold text-ops-yellow text-sm">
+                      {settings.max_teams_per_ps} Teams (Strict limit)
                     </span>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
-                    <span className="text-slate-400 block mb-1">One PS Per Team:</span>
-                    <span className="font-bold font-mono text-emerald-400 text-base">
-                      {settings.one_ps_per_team ? 'Enabled (Strict)' : 'Disabled'}
+                  <div className="p-3.5 rounded-xl bg-ops-card border border-ops-border">
+                    <span className="text-ops-textMuted block mb-1">One PS Per Team Policy:</span>
+                    <span className="font-bold text-ops-emerald text-sm">
+                      {settings.one_ps_per_team ? 'Enforced (Active)' : 'Disabled'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Danger Zone: Reset Portal Data */}
-              <div className="p-6 rounded-2xl bg-rose-500/5 border border-rose-500/20 space-y-4">
+              {/* Danger Zone */}
+              <div className="ops-alert-rejected p-6 rounded-2xl space-y-4">
                 <div>
-                  <h4 className="font-bold text-base text-rose-400">Danger Zone</h4>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    Wipes all team registrations and selections. Reverts all 30 PS codes to 0/2 available.
+                  <h4 className="font-bold text-sm text-ops-magenta uppercase tracking-wider">
+                    Emergency Data Reset
+                  </h4>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    Clears all active team selections and resets all 30 PS codes back to 0/2 available.
                   </p>
                 </div>
 
                 <button
                   onClick={handleResetAllData}
-                  className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-rose-600/20"
+                  className="px-4 py-2.5 rounded-xl bg-ops-magenta text-white font-bold text-xs uppercase tracking-wider shadow-magenta-glow flex items-center gap-2"
                 >
                   <Trash2 className="w-4 h-4" />
-                  <span>Reset All Selections & Restore Initial State</span>
+                  <span>Wipe Selections & Restore Clean State</span>
                 </button>
               </div>
             </div>
@@ -1194,30 +1206,153 @@ export default function AdminPage() {
         </div>
       </main>
 
-      {/* Manual Assignment Modal */}
+      {/* CREATE TEAM MODAL */}
+      {createTeamModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="relative w-full max-w-md ops-panel border border-ops-border rounded-2xl p-6 font-mono">
+            <h3 className="text-base font-bold text-white uppercase tracking-wider mb-1">
+              Create Team Account
+            </h3>
+            <p className="text-xs text-ops-textMuted mb-4">
+              Credentials can be issued to participating team leaders.
+            </p>
+
+            {createTeamError && (
+              <div className="ops-alert-rejected p-3 rounded-xl mb-4 text-xs text-slate-200">
+                {createTeamError}
+              </div>
+            )}
+
+            <form onSubmit={handleCreateTeamSubmit} className="space-y-3">
+              <div>
+                <label className="block text-[11px] uppercase tracking-wider text-ops-cyan mb-1">
+                  Team ID (Unique)
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. TEAM-106"
+                  value={newTeamId}
+                  onChange={(e) => setNewTeamId(e.target.value.toUpperCase())}
+                  className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] uppercase tracking-wider text-ops-cyan mb-1">
+                  Team Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. ByteBusters"
+                  value={newTeamName}
+                  onChange={(e) => setNewTeamName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] uppercase tracking-wider text-ops-cyan mb-1">
+                  Domain Category
+                </label>
+                <select
+                  value={newTeamDomain}
+                  onChange={(e) => setNewTeamDomain(e.target.value as DomainCategory)}
+                  className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs"
+                >
+                  <option value="CSE_AIML">CSE / AIML</option>
+                  <option value="ECE">Electronics and Communication</option>
+                  <option value="MECH_CIVIL">Mechanical and Civil</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] uppercase tracking-wider text-ops-cyan mb-1">
+                  Initial Password
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newTeamPassword}
+                  onChange={(e) => setNewTeamPassword(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-ops-cyan mb-1">
+                    Leader Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Leader Name"
+                    value={newTeamLeader}
+                    onChange={(e) => setNewTeamLeader(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-ops-cyan mb-1">
+                    Leader Email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="leader@vvce.ac.in"
+                    value={newTeamEmail}
+                    onChange={(e) => setNewTeamEmail(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setCreateTeamModal(false)}
+                  className="py-2.5 px-4 rounded-xl border border-ops-border bg-ops-card text-ops-textMuted text-xs font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-ops-cyan text-slate-950 text-xs font-bold shadow-cyan-glow"
+                >
+                  Create Account
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MANUAL ASSIGN MODAL */}
       {manualAssignModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="relative w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden p-6">
-            <h3 className="text-lg font-bold text-white mb-1">Manual Team Assignment</h3>
-            <p className="text-xs text-slate-400 mb-4">
-              Manually assign an authorized team to an available Problem Statement slot.
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="relative w-full max-w-md ops-panel border border-ops-border rounded-2xl p-6 font-mono">
+            <h3 className="text-base font-bold text-white uppercase tracking-wider mb-1">
+              Manual PS Assignment
+            </h3>
+            <p className="text-xs text-ops-textMuted mb-4">
+              Assign an existing team account directly to a PS code.
             </p>
 
             {manualAssignError && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+              <div className="ops-alert-rejected p-3 rounded-xl mb-4 text-xs text-slate-200">
                 {manualAssignError}
               </div>
             )}
 
-            <form onSubmit={handleManualAssignSubmit} className="space-y-3.5">
+            <form onSubmit={handleManualAssignSubmit} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Select PS Code
+                <label className="block text-[11px] uppercase tracking-wider text-ops-cyan mb-1">
+                  Target PS Code
                 </label>
                 <select
                   value={manualPSCode}
                   onChange={(e) => setManualPSCode(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono font-bold"
+                  className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs font-bold text-ops-cyan"
                 >
                   {problemStatements
                     .filter((p) => p.occupied_count < 2)
@@ -1230,73 +1365,39 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Team Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Phoenix"
-                  value={manualTeamName}
-                  onChange={(e) => setManualTeamName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Registration ID
+                <label className="block text-[11px] uppercase tracking-wider text-ops-cyan mb-1">
+                  Select Team Account
                 </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. VVCE-REG-501"
-                  value={manualRegId}
-                  onChange={(e) => setManualRegId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs font-mono"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Leader Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Leader Full Name"
-                    value={manualLeaderName}
-                    onChange={(e) => setManualLeaderName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Leader Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="leader@vvce.ac.in"
-                    value={manualLeaderEmail}
-                    onChange={(e) => setManualLeaderEmail(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs"
-                  />
-                </div>
+                <select
+                  value={manualTeamId}
+                  onChange={(e) => setManualTeamId(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs font-bold"
+                >
+                  <option value="">Choose a team...</option>
+                  {teams
+                    .filter((t) => t.ps_code === 'N/A')
+                    .map((t) => (
+                      <option key={t.id} value={t.team_id}>
+                        {t.team_id} – {t.team_name} ({t.domain})
+                      </option>
+                    ))}
+                </select>
               </div>
 
               <div className="flex items-center gap-3 pt-3">
                 <button
                   type="button"
                   onClick={() => setManualAssignModal(false)}
-                  className="py-2.5 px-4 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 text-xs font-semibold"
+                  className="py-2.5 px-4 rounded-xl border border-ops-border bg-ops-card text-ops-textMuted text-xs font-bold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-500/20"
+                  disabled={!manualTeamId}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-ops-yellow text-slate-950 text-xs font-bold shadow-yellow-glow disabled:opacity-50"
                 >
-                  Confirm Manual Assignment
+                  Confirm Assignment
                 </button>
               </div>
             </form>
@@ -1306,4 +1407,3 @@ export default function AdminPage() {
     </div>
   );
 }
-

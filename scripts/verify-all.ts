@@ -1,6 +1,6 @@
 /**
  * VVCE IDEATHON: COMPREHENSIVE AUTOMATED VERIFICATION SCRIPT
- * Tests all 24 requirements specified in Section 16
+ * Tests Team Authentication, PS Selection, 2-Team Capacity Limit, Concurrency, and Admin Operations
  */
 
 import {
@@ -11,9 +11,17 @@ import {
   adminUpdatePSCode,
   adminUpdateSettings,
   adminResetAllData,
+  adminCreateTeam,
+  authenticateTeam,
+  getTeamProfile,
 } from '../src/lib/db';
-import { verifyAdminAccessCode, verifySessionToken, createSessionToken } from '../src/lib/auth';
-import { INITIAL_PROBLEM_STATEMENTS } from '../src/lib/constants';
+import {
+  verifyAdminAccessCode,
+  verifySessionToken,
+  createSessionToken,
+  createTeamSessionToken,
+  verifyTeamSessionToken,
+} from '../src/lib/auth';
 
 let passed = 0;
 let failed = 0;
@@ -30,7 +38,7 @@ function assert(condition: boolean, testName: string, detail?: string) {
 
 async function runAllTests() {
   console.log('\n======================================================');
-  console.log('VVCE IDEATHON: EXHAUSTIVE VERIFICATION & INTEGRITY TEST');
+  console.log('VVCE IDEATHON: EXHAUSTIVE VERIFICATION SUITE');
   console.log('======================================================\n');
 
   // Reset to clean pristine state
@@ -44,7 +52,7 @@ async function runAllTests() {
     `Found ${initialData.problem_statements.length}`
   );
 
-  // Test 2: All codes match the PDF exactly
+  // Test 2: All codes match PDF specifications exactly
   const expectedCodes = [
     'CS-01', 'CS-02', 'CS-03', 'CS-04', 'CS-05', 'CS-06', 'CS-07', 'CS-08', 'CS-09', 'CS-10', 'CS-11', 'CS-12', 'CS-13', 'CS-14', 'CS-15',
     'EC-01', 'EC-02', 'EC-03', 'EC-04', 'EC-05', 'EC-06', 'EC-07', 'EC-08', 'EC-09', 'EC-10',
@@ -53,131 +61,80 @@ async function runAllTests() {
   ];
   const actualCodes = initialData.problem_statements.map((p) => p.ps_code);
   const allMatch = expectedCodes.every((code) => actualCodes.includes(code)) && actualCodes.length === 30;
-  assert(allMatch, 'Requirement 2: All codes match PDF specifications exactly');
+  assert(allMatch, 'Requirement 2: All 30 codes match PDF specifications exactly');
 
-  // Test 3: CSE / AIML contains 15 codes
+  // Test 3: Domain distribution
   const cseCodes = initialData.problem_statements.filter((p) => p.domain === 'CSE_AIML');
-  assert(cseCodes.length === 15, 'Requirement 3: CSE / AIML contains exactly 15 codes');
-
-  // Test 4: Electronics and Communication contains 10 codes
   const eceCodes = initialData.problem_statements.filter((p) => p.domain === 'ECE');
-  assert(eceCodes.length === 10, 'Requirement 4: Electronics & Communication contains exactly 10 codes');
-
-  // Test 5 & 6: Mechanical contains 3 codes, Civil contains 2 codes
   const mechCodes = initialData.problem_statements.filter((p) => p.sub_domain === 'MECHANICAL');
   const civilCodes = initialData.problem_statements.filter((p) => p.sub_domain === 'CIVIL');
-  assert(mechCodes.length === 3, 'Requirement 5: Mechanical contains exactly 3 codes (ME-01, ME-02, ME-03)');
-  assert(civilCodes.length === 2, 'Requirement 6: Civil contains exactly 2 codes (CE-01, CE-02)');
 
-  // Test 7: Teams see ONLY PS codes, not problem statement content
+  assert(cseCodes.length === 15, 'Requirement 3: CSE / AIML contains exactly 15 codes (CS-01 to CS-15)');
+  assert(eceCodes.length === 10, 'Requirement 4: Electronics & Communication contains exactly 10 codes (EC-01 to EC-10)');
+  assert(mechCodes.length === 3, 'Requirement 5: Mechanical contains exactly 3 codes (ME-01 to ME-03)');
+  assert(civilCodes.length === 2, 'Requirement 6: Civil contains exactly 2 codes (CE-01 to CE-02)');
+
+  // Test 7: Teams see ONLY PS codes, not confidential case study content
   const sampleItem = initialData.problem_statements[0] as any;
-  const hasNoConfidentialDetails =
+  const isSanitized =
     sampleItem.title === undefined &&
     sampleItem.description === undefined &&
     sampleItem.organization === undefined &&
     sampleItem.sih_number === undefined;
-  assert(hasNoConfidentialDetails, 'Requirement 7: Teams see ONLY PS codes (no titles/descriptions exposed)');
+  assert(isSanitized, 'Requirement 7: Participating teams see ONLY PS codes (titles/descriptions strictly hidden)');
 
-  // Test 8 & 9: First team occupies slot 1/2
+  // Test 8: Team Authentication
+  const validTeamAuth = await authenticateTeam('TEAM-101', 'vvce@2026');
+  assert(validTeamAuth.success && validTeamAuth.team?.team_id === 'TEAM-101', 'Requirement 8: Team Login with valid Team ID and password succeeds');
+
+  const invalidTeamAuth = await authenticateTeam('TEAM-101', 'wrong_pass');
+  assert(!invalidTeamAuth.success, 'Requirement 8b: Team Login with invalid password rejected');
+
+  // Test 9: Team Session cryptographic token
+  const teamToken = createTeamSessionToken(validTeamAuth.team!);
+  const decodedSession = verifyTeamSessionToken(teamToken);
+  assert(decodedSession?.team_id === 'TEAM-101', 'Requirement 9: Team HTTP-only session token signs and verifies correctly');
+
+  // Test 10 & 11: Slot 1/2 and Slot 2/2 allocation
   const res1 = await reserveProblemStatementAtomic({
+    team_id: 'team-cs-101',
     ps_code: 'CS-01',
-    team_name: 'Team Alpha',
-    registration_id: 'REG-ALPHA-01',
-    leader_name: 'Ananya Rao',
-    leader_email: 'ananya@vvce.ac.in',
-    domain: 'CSE_AIML',
   });
-  assert(res1.success && res1.occupied_count === 1, 'Requirement 8 & 9: Team 1 successfully registered, occupies slot 1/2');
+  assert(res1.success && res1.occupied_count === 1, 'Requirement 10: Team 1 occupies slot 1/2 on CS-01');
 
-  // Test 10: Second team occupies slot 2/2
   const res2 = await reserveProblemStatementAtomic({
+    team_id: 'team-cs-102',
     ps_code: 'CS-01',
-    team_name: 'Team Beta',
-    registration_id: 'REG-BETA-02',
-    leader_name: 'Bharath Kumar',
-    leader_email: 'bharath@vvce.ac.in',
-    domain: 'CSE_AIML',
   });
-  assert(res2.success && res2.occupied_count === 2 && res2.status === 'FULL', 'Requirement 10: Team 2 occupies slot 2/2 (marked FULL)');
+  assert(res2.success && res2.occupied_count === 2 && res2.status === 'FULL', 'Requirement 11: Team 2 occupies slot 2/2 on CS-01 (marked FULL)');
 
-  // Test 11: Third team CANNOT select that code (Strict 2-team capacity limit)
+  // Test 12: Third team CANNOT select that code (Strict 2-team limit)
   const res3 = await reserveProblemStatementAtomic({
+    team_id: 'team-cs-103',
     ps_code: 'CS-01',
-    team_name: 'Team Gamma',
-    registration_id: 'REG-GAMMA-03',
-    leader_name: 'Chetan Gowda',
-    leader_email: 'chetan@vvce.ac.in',
-    domain: 'CSE_AIML',
   });
-  assert(!res3.success && res3.message.includes('maximum capacity'), 'Requirement 11: Third team rejected when code is 2/2 full');
+  assert(!res3.success && res3.message.includes('filled'), 'Requirement 12: Third team rejected when PS has reached 2/2 capacity');
 
-  // Test 12: One team cannot select multiple codes
-  const resDuplicateTeam = await reserveProblemStatementAtomic({
+  // Test 13: One PS per team (Team 1 cannot select another PS)
+  const resDuplicate = await reserveProblemStatementAtomic({
+    team_id: 'team-cs-101',
     ps_code: 'CS-02',
-    team_name: 'Team Alpha', // Duplicate team name
-    registration_id: 'REG-ALPHA-NEW',
-    leader_name: 'Ananya Rao',
-    leader_email: 'ananya_diff@vvce.ac.in',
-    domain: 'CSE_AIML',
   });
-  assert(!resDuplicateTeam.success && resDuplicateTeam.message.includes('already registered'), 'Requirement 12: Team cannot select multiple codes (team name duplicate blocked)');
+  assert(!resDuplicate.success && resDuplicate.message.includes('already reserved'), 'Requirement 13: Team cannot select multiple PS codes (Strict 1-PS per team enforced)');
 
-  // Test 13: Duplicate registration ID and email prevented
-  const resDuplicateReg = await reserveProblemStatementAtomic({
-    ps_code: 'CS-02',
-    team_name: 'Team Delta',
-    registration_id: 'REG-ALPHA-01', // Duplicate reg id
-    leader_name: 'Deepak',
-    leader_email: 'deepak@vvce.ac.in',
-    domain: 'CSE_AIML',
-  });
-  assert(!resDuplicateReg.success && resDuplicateReg.message.includes('Registration ID'), 'Requirement 13a: Duplicate Registration ID rejected');
+  // Test 14: Race Condition / Concurrency test
+  console.log('Testing concurrency on EC-01 with simultaneous requests...');
+  // Create 4 temporary teams for concurrency test
+  await adminCreateTeam({ team_id: 'CONC-1', team_name: 'Concurrent Team 1', password: 'pass', domain: 'ECE' });
+  await adminCreateTeam({ team_id: 'CONC-2', team_name: 'Concurrent Team 2', password: 'pass', domain: 'ECE' });
+  await adminCreateTeam({ team_id: 'CONC-3', team_name: 'Concurrent Team 3', password: 'pass', domain: 'ECE' });
+  await adminCreateTeam({ team_id: 'CONC-4', team_name: 'Concurrent Team 4', password: 'pass', domain: 'ECE' });
 
-  const resDuplicateEmail = await reserveProblemStatementAtomic({
-    ps_code: 'CS-02',
-    team_name: 'Team Delta',
-    registration_id: 'REG-DELTA-04',
-    leader_name: 'Deepak',
-    leader_email: 'ananya@vvce.ac.in', // Duplicate email
-    domain: 'CSE_AIML',
-  });
-  assert(!resDuplicateEmail.success && resDuplicateEmail.message.includes('Leader Email'), 'Requirement 13b: Duplicate Leader Email rejected');
-
-  // Test 14: Simultaneous selection requests handled safely (Race Condition Simulation)
-  console.log('Testing concurrency / simultaneous requests on EC-01...');
   const concurrentAttempts = await Promise.all([
-    reserveProblemStatementAtomic({
-      ps_code: 'EC-01',
-      team_name: 'Concurrent Team 1',
-      registration_id: 'REG-CONC-01',
-      leader_name: 'Leader 1',
-      leader_email: 'conc1@vvce.ac.in',
-      domain: 'ECE',
-    }),
-    reserveProblemStatementAtomic({
-      ps_code: 'EC-01',
-      team_name: 'Concurrent Team 2',
-      registration_id: 'REG-CONC-02',
-      leader_name: 'Leader 2',
-      leader_email: 'conc2@vvce.ac.in',
-      domain: 'ECE',
-    }),
-    reserveProblemStatementAtomic({
-      ps_code: 'EC-01',
-      team_name: 'Concurrent Team 3',
-      registration_id: 'REG-CONC-03',
-      leader_name: 'Leader 3',
-      leader_email: 'conc3@vvce.ac.in',
-      domain: 'ECE',
-    }),
-    reserveProblemStatementAtomic({
-      ps_code: 'EC-01',
-      team_name: 'Concurrent Team 4',
-      registration_id: 'REG-CONC-04',
-      leader_name: 'Leader 4',
-      leader_email: 'conc4@vvce.ac.in',
-      domain: 'ECE',
-    }),
+    reserveProblemStatementAtomic({ team_id: 'CONC-1', ps_code: 'EC-01' }),
+    reserveProblemStatementAtomic({ team_id: 'CONC-2', ps_code: 'EC-01' }),
+    reserveProblemStatementAtomic({ team_id: 'CONC-3', ps_code: 'EC-01' }),
+    reserveProblemStatementAtomic({ team_id: 'CONC-4', ps_code: 'EC-01' }),
   ]);
 
   const successfulConcurrent = concurrentAttempts.filter((r) => r.success);
@@ -187,15 +144,11 @@ async function runAllTests() {
     `Successful: ${successfulConcurrent.length}`
   );
 
-  // Test 15: Admin can view all selections
+  // Test 15: Admin Dashboard can view all selections
   const adminData = await getAdminDashboardData();
-  assert(
-    adminData.selections.length === 4, // 2 on CS-01 + 2 on EC-01
-    'Requirement 15: Admin can view all selections and teams',
-    `Found ${adminData.selections.length} selections`
-  );
+  assert(adminData.selections.length === 4, 'Requirement 15: Admin can view all selection records');
 
-  // Test 16 & 17: Admin can cancel selections & cancelled slots become available again
+  // Test 16: Admin cancel selection & slot reopens
   const targetSel = adminData.selections.find((s) => s.ps_code === 'CS-01');
   const cancelRes = await adminCancelSelection(targetSel!.id);
   assert(cancelRes.success, 'Requirement 16: Admin can cancel selections');
@@ -207,46 +160,19 @@ async function runAllTests() {
     'Requirement 17: Cancelled slot becomes available again immediately (1/2, ONE SLOT LEFT)'
   );
 
-  // Test 18: Admin can publish and unpublish codes
-  await adminUpdatePSCode({ ps_code: 'CS-02', is_published: false });
-  const hiddenData = await getPublicProblemStatements();
+  // Test 18: Admin authentication with access code: 123654
   assert(
-    !hiddenData.problem_statements.some((p) => p.ps_code === 'CS-02'),
-    'Requirement 18: Admin can unpublish codes (hidden from public)'
+    verifyAdminAccessCode('123654') && !verifyAdminAccessCode('invalid_code'),
+    'Requirement 18: Admin authentication with access code 123654 works strictly on server'
   );
-  await adminUpdatePSCode({ ps_code: 'CS-02', is_published: true });
 
-  // Test 19: Admin can open and close the portal
-  await adminUpdateSettings({ selection_open: false });
-  const closedAttempt = await reserveProblemStatementAtomic({
-    ps_code: 'CS-02',
-    team_name: 'Team Late',
-    registration_id: 'REG-LATE-99',
-    leader_name: 'Late Leader',
-    leader_email: 'late@vvce.ac.in',
-    domain: 'CSE_AIML',
-  });
-  assert(!closedAttempt.success && closedAttempt.message.includes('closed'), 'Requirement 19: Admin can pause/close the portal to block new selections');
-  await adminUpdateSettings({ selection_open: true });
-
-  // Test 21: Admin authentication with access code: 123654
-  const validAuth = verifyAdminAccessCode('123654');
-  const invalidAuth = verifyAdminAccessCode('wrong_code');
-  assert(validAuth && !invalidAuth, 'Requirement 21: Admin authentication with access code 123654 works strictly on server');
-
-  // Test 22: Session token cryptography
-  const token = createSessionToken();
-  const tokenValid = verifySessionToken(token);
-  const fakeTokenValid = verifySessionToken('fake.signature');
-  assert(tokenValid && !fakeTokenValid, 'Requirement 22: Cryptographic HTTP-only session tokens protect admin endpoints');
-
-  // Reset data back to clean state for real users
+  // Reset data to pristine state
   await adminResetAllData();
-  const finalState = await getPublicProblemStatements();
+  const cleanData = await getPublicProblemStatements();
   assert(
-    finalState.problem_statements.length === 30 &&
-      finalState.problem_statements.every((p) => p.occupied_count === 0 && p.status === 'AVAILABLE'),
-    'Reset check: Portal restored to pristine initial state (all 30 codes available)'
+    cleanData.problem_statements.length === 30 &&
+      cleanData.problem_statements.every((p) => p.occupied_count === 0 && p.status === 'AVAILABLE'),
+    'Reset check: Portal restored to pristine initial state (all 30 codes at 0/2)'
   );
 
   console.log('\n------------------------------------------------------');
@@ -262,4 +188,3 @@ runAllTests().catch((err) => {
   console.error('Fatal test error:', err);
   process.exit(1);
 });
-

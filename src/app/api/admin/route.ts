@@ -12,6 +12,8 @@ import {
   adminUpdatePSCode,
   adminUpdateSettings,
   adminResetAllData,
+  adminCreateTeam,
+  adminSeedTeams,
 } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -39,7 +41,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { action } = body;
 
-    // 1. LOGIN ACTION (No prior auth token required)
+    // 1. LOGIN ACTION
     if (action === 'login') {
       const code = body.accessCode || body.password || '';
       if (!code) {
@@ -56,7 +58,6 @@ export async function POST(req: NextRequest) {
           message: 'Admin authorization granted.',
         });
 
-        // Set secure HTTP-only cookie
         response.cookies.set(ADMIN_COOKIE_NAME, token, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
@@ -68,7 +69,6 @@ export async function POST(req: NextRequest) {
         return response;
       }
 
-      // Security: Never reveal the expected code
       return NextResponse.json(
         { success: false, message: 'Invalid organizer access code. Access denied.' },
         { status: 401 }
@@ -80,19 +80,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized access.' }, { status: 401 });
     }
 
-    // LOGOUT ACTION
     if (action === 'logout') {
       const response = NextResponse.json({ success: true, message: 'Logged out successfully.' });
       response.cookies.delete(ADMIN_COOKIE_NAME);
       return response;
     }
 
-    // CHECK AUTH STATUS
     if (action === 'check-auth') {
       return NextResponse.json({ success: true, authorized: true });
     }
 
-    // UPDATE INDIVIDUAL PS CODE (PUBLISH / UNPUBLISH / ENABLE / DISABLE SELECTION)
+    // CREATE TEAM ACCOUNT
+    if (action === 'create-team') {
+      const { team_id, team_name, password, domain, leader_name, leader_email } = body;
+      const res = await adminCreateTeam({
+        team_id,
+        team_name,
+        password,
+        domain,
+        leader_name,
+        leader_email,
+      });
+
+      if (!res.success) {
+        return NextResponse.json(res, { status: 400 });
+      }
+      return NextResponse.json(res, { status: 201 });
+    }
+
+    // SEED TEAMS
+    if (action === 'seed-teams') {
+      const res = await adminSeedTeams();
+      return NextResponse.json(res);
+    }
+
+    // UPDATE INDIVIDUAL PS CODE
     if (action === 'update-ps') {
       const { ps_code, is_published, is_selection_open } = body;
       if (!ps_code) {
@@ -103,7 +125,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(res);
     }
 
-    // CANCEL A TEAM'S SELECTION (REOPENS SLOT IMMEDIATELY)
+    // CANCEL A TEAM'S SELECTION
     if (action === 'cancel-selection') {
       const { selection_id } = body;
       if (!selection_id) {
@@ -114,24 +136,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(res);
     }
 
-    // MANUAL ASSIGNMENT (Respects 2-team capacity limit & duplicate restrictions)
+    // MANUAL ASSIGNMENT
     if (action === 'manual-assign') {
-      const { ps_code, team_name, registration_id, leader_name, leader_email } = body;
-      if (!ps_code || !team_name || !registration_id || !leader_name || !leader_email) {
+      const { ps_code, team_id } = body;
+      if (!ps_code || !team_id) {
         return NextResponse.json(
-          { success: false, message: 'All team details and PS code are required.' },
+          { success: false, message: 'Team ID and PS code are required.' },
           { status: 400 }
         );
       }
 
-      const res = await adminManualAssign({
-        ps_code,
-        team_name,
-        registration_id,
-        leader_name,
-        leader_email,
-      });
-
+      const res = await adminManualAssign({ ps_code, team_id });
       if (!res.success) {
         return NextResponse.json(res, { status: 409 });
       }
@@ -139,7 +154,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(res);
     }
 
-    // UPDATE PORTAL SETTINGS (PORTAL PUBLISHED, SELECTION OPEN)
+    // UPDATE PORTAL SETTINGS
     if (action === 'update-settings') {
       const { portal_published, selection_open, max_teams_per_ps, one_ps_per_team } = body;
       const updated = await adminUpdateSettings({
@@ -152,7 +167,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, settings: updated });
     }
 
-    // RESET ALL DATA TO PRISTINE STATE
+    // RESET ALL DATA
     if (action === 'reset-all') {
       const res = await adminResetAllData();
       return NextResponse.json(res);
@@ -164,4 +179,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
   }
 }
-

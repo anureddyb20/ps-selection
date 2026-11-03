@@ -2,87 +2,91 @@
 
 import React from 'react';
 import { PublicPSItem } from '@/lib/types';
-import { CheckCircle2, AlertCircle, XCircle, ArrowRight } from 'lucide-react';
+import { CheckCircle2, AlertCircle, XCircle, ArrowRight, ShieldCheck } from 'lucide-react';
 
 interface PSCardProps {
   item: PublicPSItem;
   onSelect: (item: PublicPSItem) => void;
   selectionOpen: boolean;
+  teamAlreadySelected: boolean;
 }
 
-export default function PSCard({ item, onSelect, selectionOpen }: PSCardProps) {
+export default function PSCard({
+  item,
+  onSelect,
+  selectionOpen,
+  teamAlreadySelected,
+}: PSCardProps) {
   const isFull = item.occupied_count >= item.max_teams;
   const isOneSlotLeft = item.occupied_count === 1;
-  const canSelect = item.is_available && selectionOpen && !isFull;
+  const canSelect = item.is_available && selectionOpen && !isFull && !teamAlreadySelected;
 
   return (
     <div
-      className={`relative rounded-2xl p-6 transition-all duration-200 border flex flex-col justify-between ${
+      className={`ops-card rounded-xl p-5 border flex flex-col justify-between transition-all ${
         isFull
-          ? 'bg-slate-900/40 border-slate-800/60 opacity-80'
+          ? 'opacity-60 border-ops-border/60'
           : isOneSlotLeft
-          ? 'bg-slate-900/80 border-amber-500/30 hover:border-amber-500/60 shadow-lg shadow-amber-500/5'
-          : 'bg-slate-900/80 border-slate-800 hover:border-blue-500/50 hover:bg-slate-900 shadow-md hover:shadow-blue-500/10'
+          ? 'border-ops-yellow/30 hover:border-ops-yellow/60'
+          : 'hover:border-ops-cyan/50'
       }`}
     >
-      {/* Top Header: PS Code & Status */}
       <div>
+        {/* Card Header: PS Code & Status */}
         <div className="flex items-center justify-between gap-3 mb-4">
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black tracking-tight text-white font-mono">
-              {item.ps_code}
-            </span>
-          </div>
+          <span className="text-2xl sm:text-3xl font-mono font-black tracking-wider text-white">
+            {item.ps_code}
+          </span>
 
           {/* Status Badge */}
           {isFull ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/15 text-rose-400 border border-rose-500/30">
-              <XCircle className="w-3.5 h-3.5" />
+            <span className="ops-badge-magenta px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1">
+              <XCircle className="w-3 h-3" />
               <span>FULL</span>
             </span>
           ) : isOneSlotLeft ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/30 animate-pulse">
-              <AlertCircle className="w-3.5 h-3.5" />
+            <span className="ops-badge-yellow px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" />
               <span>ONE SLOT LEFT</span>
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-              <CheckCircle2 className="w-3.5 h-3.5" />
+            <span className="ops-badge-cyan px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" />
               <span>AVAILABLE</span>
             </span>
           )}
         </div>
 
-        {/* Slot Progress Bar and Counter */}
-        <div className="my-5 p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80">
-          <div className="flex items-center justify-between text-xs font-medium mb-2.5">
-            <span className="text-slate-400">Team Slots:</span>
+        {/* Slot Progress */}
+        <div className="p-3 rounded-lg bg-ops-panel border border-ops-border/60 mb-5">
+          <div className="flex items-center justify-between text-xs font-mono mb-2">
+            <span className="text-ops-textMuted">Occupancy</span>
             <span
-              className={`font-mono font-bold ${
+              className={`font-bold ${
                 isFull
-                  ? 'text-rose-400'
+                  ? 'text-ops-magenta'
                   : isOneSlotLeft
-                  ? 'text-amber-300'
-                  : 'text-emerald-400'
+                  ? 'text-ops-yellow'
+                  : 'text-ops-cyan'
               }`}
             >
               {item.occupied_count} / {item.max_teams} Teams
             </span>
           </div>
 
-          {/* Visual slot indicator blocks */}
-          <div className="grid grid-cols-2 gap-2">
-            {Array.from({ length: item.max_teams }).map((_, index) => {
-              const isOccupied = index < item.occupied_count;
+          {/* 2-slot indicator blocks */}
+          <div className="grid grid-cols-2 gap-1.5">
+            {Array.from({ length: item.max_teams }).map((_, idx) => {
+              const filled = idx < item.occupied_count;
               return (
                 <div
-                  key={index}
-                  className={`h-2.5 rounded-full transition-all duration-300 ${
-                    isOccupied
+                  key={idx}
+                  className={`h-2 rounded-sm transition-all ${
+                    filled
                       ? isFull
-                        ? 'bg-rose-500'
-                        : 'bg-amber-400'
-                      : 'bg-slate-800'
+                        ? 'bg-ops-magenta'
+                        : 'bg-ops-yellow'
+                      : 'bg-ops-border'
                   }`}
                 />
               );
@@ -91,33 +95,39 @@ export default function PSCard({ item, onSelect, selectionOpen }: PSCardProps) {
         </div>
       </div>
 
-      {/* Action Selection Button */}
-      <div className="mt-2">
+      {/* Action Button */}
+      <div>
         {canSelect ? (
           <button
             onClick={() => onSelect(item)}
-            className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-blue-500/20 hover:shadow-blue-500/30 transition-all flex items-center justify-center gap-2 group active:scale-[0.99]"
+            className="w-full py-2.5 px-4 rounded-xl font-mono font-bold text-xs uppercase tracking-wider bg-ops-cyan/15 hover:bg-ops-cyan text-ops-cyan hover:text-slate-950 border border-ops-cyan/40 hover:border-ops-cyan transition-all flex items-center justify-center gap-2 group active:scale-[0.99]"
           >
-            <span>SELECT</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <span>SELECT CODE</span>
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
           </button>
         ) : isFull ? (
           <button
             disabled
-            className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-slate-800/60 text-slate-400 border border-slate-700/50 cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-2.5 px-4 rounded-xl font-mono text-xs uppercase tracking-wider bg-ops-panel text-slate-600 border border-ops-border/40 cursor-not-allowed flex items-center justify-center gap-1.5"
           >
-            <span>FULL (0 SLOTS)</span>
+            <span>CAPACITY REACHED</span>
+          </button>
+        ) : teamAlreadySelected ? (
+          <button
+            disabled
+            className="w-full py-2.5 px-4 rounded-xl font-mono text-xs uppercase tracking-wider bg-ops-panel text-slate-500 border border-ops-border/40 cursor-not-allowed flex items-center justify-center gap-1.5"
+          >
+            <span>LOCKED (1 PS LIMIT)</span>
           </button>
         ) : (
           <button
             disabled
-            className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-slate-800/60 text-slate-400 border border-slate-700/50 cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-2.5 px-4 rounded-xl font-mono text-xs uppercase tracking-wider bg-ops-panel text-slate-500 border border-ops-border/40 cursor-not-allowed flex items-center justify-center gap-1.5"
           >
-            <span>SELECTION PAUSED</span>
+            <span>DESK PAUSED</span>
           </button>
         )}
       </div>
     </div>
   );
 }
-

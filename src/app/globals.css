@@ -4,45 +4,81 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-100 antialiased selection:bg-blue-600 selection:text-white min-h-screen;
+    background-color: #050608;
+    color: #f1f5f9;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    min-height: 100vh;
   }
 }
 
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #08090e;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 4px;
+  background: #1e2230;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #2a3042;
 }
 
-/* Glassmorphism helpers */
-.glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Reference UI components */
+.ops-panel {
+  background-color: #0b0c12;
+  border: 1px solid #1e2230;
 }
 
-.glass-panel-hover {
-  transition: all 0.2s ease-in-out;
+.ops-card {
+  background-color: #10121a;
+  border: 1px solid #1e2230;
+  transition: all 0.15s ease-in-out;
 }
 
-.glass-panel-hover:hover {
-  background: rgba(30, 41, 59, 0.85);
-  border-color: rgba(59, 130, 246, 0.35);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(59, 130, 246, 0.15);
+.ops-card:hover {
+  background-color: #161924;
+  border-color: #2a3042;
 }
 
+.ops-card-active {
+  border-color: #ffd000 !important;
+  background-color: #141620 !important;
+  box-shadow: 0 0 15px -3px rgba(255, 208, 0, 0.25);
+}
+
+.ops-alert-rejected {
+  background-color: #1a0713;
+  border: 1px solid #ff007a;
+  box-shadow: 0 0 15px -3px rgba(255, 0, 122, 0.2);
+}
+
+.ops-badge-cyan {
+  color: #00e5f2;
+  background: rgba(0, 229, 242, 0.1);
+  border: 1px solid rgba(0, 229, 242, 0.25);
+}
+
+.ops-badge-yellow {
+  color: #ffd000;
+  background: rgba(255, 208, 0, 0.1);
+  border: 1px solid rgba(255, 208, 0, 0.25);
+}
+
+.ops-badge-magenta {
+  color: #ff007a;
+  background: rgba(255, 0, 122, 0.1);
+  border: 1px solid rgba(255, 0, 122, 0.25);
+}
+
+.ops-badge-emerald {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}

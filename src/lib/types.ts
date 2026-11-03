@@ -15,8 +15,10 @@ export interface ProblemStatement {
 
 export interface Team {
   id: string;
-  team_name: string;
-  registration_id: string;
+  team_id: string;            // e.g. 'TEAM-101'
+  team_name: string;          // e.g. 'Neural Knights'
+  password_hash: string;      // Securely hashed password
+  domain: DomainCategory;     // 'CSE_AIML' | 'ECE' | 'MECH_CIVIL'
   leader_name: string;
   leader_email: string;
   created_at: string;
@@ -47,8 +49,8 @@ export interface PublicPSItem {
   ps_code: string;
   domain: DomainCategory;
   sub_domain: SubDomain | null;
-  occupied_count: number; // 0, 1, or 2
-  max_teams: number;      // 2
+  occupied_count: number;     // 0, 1, or 2
+  max_teams: number;          // 2
   status: AvailabilityStatus; // 'AVAILABLE' | 'ONE SLOT LEFT' | 'FULL'
   is_available: boolean;
 }
@@ -80,11 +82,26 @@ export interface SelectionRecordItem {
   domain: DomainCategory;
   sub_domain: SubDomain | null;
   team_id: string;
+  team_code: string; // The login team_id (e.g. 'TEAM-101')
   team_name: string;
-  registration_id: string;
   leader_name: string;
   leader_email: string;
   selected_at: string;
   status: string;
 }
 
+export interface TeamPublicProfile {
+  id: string;
+  team_id: string;
+  team_name: string;
+  domain: DomainCategory;
+  leader_name: string;
+  leader_email: string;
+  selection: {
+    id: string;
+    ps_code: string;
+    domain: DomainCategory;
+    sub_domain: SubDomain | null;
+    selected_at: string;
+  } | null;
+}

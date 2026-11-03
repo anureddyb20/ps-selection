@@ -27,8 +27,8 @@ export async function GET(req: NextRequest) {
       'PS Code',
       'Domain',
       'Sub Domain',
+      'Team ID',
       'Team Name',
-      'Registration ID',
       'Leader Name',
       'Leader Email',
       'Selected At',
@@ -40,8 +40,8 @@ export async function GET(req: NextRequest) {
       item.ps_code,
       item.domain,
       item.sub_domain || 'N/A',
+      item.team_code,
       item.team_name,
-      item.registration_id,
       item.leader_name,
       item.leader_email,
       new Date(item.selected_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
@@ -97,8 +97,8 @@ export async function GET(req: NextRequest) {
             <th>PS Code</th>
             <th>Domain</th>
             <th>Sub Domain</th>
+            <th>Team ID</th>
             <th>Team Name</th>
-            <th>Registration ID</th>
             <th>Leader Name</th>
             <th>Leader Email</th>
             <th>Selection Timestamp</th>
@@ -114,8 +114,8 @@ export async function GET(req: NextRequest) {
               <td><b>${item.ps_code}</b></td>
               <td>${item.domain}</td>
               <td>${item.sub_domain || 'N/A'}</td>
+              <td>${item.team_code}</td>
               <td>${item.team_name}</td>
-              <td>${item.registration_id}</td>
               <td>${item.leader_name}</td>
               <td>${item.leader_email}</td>
               <td>${new Date(item.selected_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</td>

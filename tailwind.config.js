@@ -9,27 +9,29 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        vvce: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#0f172a',
+        ops: {
+          bg: '#050608',
+          panel: '#0B0C12',
+          card: '#10121A',
+          cardHover: '#161924',
+          cyan: '#00E5F2',
+          magenta: '#FF007A',
+          yellow: '#FFD000',
+          emerald: '#10B981',
+          border: '#1E2230',
+          borderLight: '#2A3042',
+          textMuted: '#94A3B8',
         },
-        gold: {
-          400: '#fbbf24',
-          500: '#f59e0b',
-          600: '#d97706',
-        },
+      },
+      fontFamily: {
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+      },
+      boxShadow: {
+        'cyan-glow': '0 0 20px -3px rgba(0, 229, 242, 0.25)',
+        'magenta-glow': '0 0 20px -3px rgba(255, 0, 122, 0.25)',
+        'yellow-glow': '0 0 20px -3px rgba(255, 208, 0, 0.25)',
       },
     },
   },
   plugins: [],
 };
-
