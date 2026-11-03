@@ -167,11 +167,11 @@ export default function HomePage() {
             <div className="flex items-center gap-2.5">
               <span className="w-2.5 h-2.5 rounded-full bg-ops-cyan shadow-cyan-glow" />
               <span className="font-mono font-bold text-sm tracking-wider text-white">
-                VVCE IDEATHON 2026
+                PROBLEM STATEMENT SELECTION PORTAL
               </span>
             </div>
             <span className="text-[11px] font-mono text-ops-textMuted uppercase tracking-widest hidden sm:inline-block">
-              Problem Statement Selection Portal
+              VVCE IDEATHON 2026
             </span>
           </div>
         </div>

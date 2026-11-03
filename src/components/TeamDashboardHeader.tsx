@@ -26,10 +26,10 @@ export default function TeamDashboardHeader({
           {/* Left Title block */}
           <div>
             <div className="flex items-center gap-2 text-ops-cyan text-xs font-mono font-bold tracking-widest uppercase mb-1">
-              <span>IDEATHON // PROBLEM STATEMENT DESK</span>
+              <span>VVCE IDEATHON 2026 // SELECTION DESK</span>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight uppercase font-mono">
-              Problem Statement Desk
+              Problem Statement Selection Portal
             </h1>
             <p className="text-xs text-ops-textMuted mt-1 max-w-2xl font-mono">
               Review domain-wise problem statement codes and confirm your team's single reservation.

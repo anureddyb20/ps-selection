@@ -62,118 +62,9 @@ function ensureDirectory() {
   }
 }
 
-// Generate pre-seeded sample teams with secure hashed passwords
+// No pre-seeded teams: teams register on the fly when entering their Team ID
 function generateInitialTeams(): Team[] {
-  const now = new Date().toISOString();
-  const defaultHash = hashPassword('vvce@2026');
-
-  return [
-    // CSE / AIML
-    {
-      id: 'team-cs-101',
-      team_id: 'TEAM-101',
-      team_name: 'Neural Knights',
-      password_hash: defaultHash,
-      domain: 'CSE_AIML',
-      leader_name: 'Rahul Sharma',
-      leader_email: 'rahul.cs101@vvce.ac.in',
-      created_at: now,
-    },
-    {
-      id: 'team-cs-102',
-      team_id: 'TEAM-102',
-      team_name: 'CyberPulse',
-      password_hash: defaultHash,
-      domain: 'CSE_AIML',
-      leader_name: 'Ananya Rao',
-      leader_email: 'ananya.cs102@vvce.ac.in',
-      created_at: now,
-    },
-    {
-      id: 'team-cs-103',
-      team_id: 'TEAM-103',
-      team_name: 'DataCrafters',
-      password_hash: defaultHash,
-      domain: 'CSE_AIML',
-      leader_name: 'Pooja Hegde',
-      leader_email: 'pooja.cs103@vvce.ac.in',
-      created_at: now,
-    },
-    {
-      id: 'team-cs-104',
-      team_id: 'TEAM-104',
-      team_name: 'AlgoRhythms',
-      password_hash: defaultHash,
-      domain: 'CSE_AIML',
-      leader_name: 'Kiran Kumar',
-      leader_email: 'kiran.cs104@vvce.ac.in',
-      created_at: now,
-    },
-    {
-      id: 'team-cs-105',
-      team_id: 'TEAM-105',
-      team_name: 'CodeMatrix',
-      password_hash: defaultHash,
-      domain: 'CSE_AIML',
-      leader_name: 'Deepak M',
-      leader_email: 'deepak.cs105@vvce.ac.in',
-      created_at: now,
-    },
-
-    // ECE
-    {
-      id: 'team-ec-201',
-      team_id: 'TEAM-201',
-      team_name: 'Silicon Spark',
-      password_hash: defaultHash,
-      domain: 'ECE',
-      leader_name: 'Manish Gowda',
-      leader_email: 'manish.ec201@vvce.ac.in',
-      created_at: now,
-    },
-    {
-      id: 'team-ec-202',
-      team_id: 'TEAM-202',
-      team_name: 'WaveRiders',
-      password_hash: defaultHash,
-      domain: 'ECE',
-      leader_name: 'Suhas K',
-      leader_email: 'suhas.ec202@vvce.ac.in',
-      created_at: now,
-    },
-    {
-      id: 'team-ec-203',
-      team_id: 'TEAM-203',
-      team_name: 'IoT Mavericks',
-      password_hash: defaultHash,
-      domain: 'ECE',
-      leader_name: 'Meghana R',
-      leader_email: 'meghana.ec203@vvce.ac.in',
-      created_at: now,
-    },
-
-    // Mech & Civil
-    {
-      id: 'team-mc-301',
-      team_id: 'TEAM-301',
-      team_name: 'Titan Dynamics',
-      password_hash: defaultHash,
-      domain: 'MECH_CIVIL',
-      leader_name: 'Nikhil Patil',
-      leader_email: 'nikhil.mc301@vvce.ac.in',
-      created_at: now,
-    },
-    {
-      id: 'team-mc-302',
-      team_id: 'TEAM-302',
-      team_name: 'TerraStructures',
-      password_hash: defaultHash,
-      domain: 'MECH_CIVIL',
-      leader_name: 'Bhavana S',
-      leader_email: 'bhavana.mc302@vvce.ac.in',
-      created_at: now,
-    },
-  ];
+  return [];
 }
 
 function initializeDefaultState(): DatabaseState {
@@ -261,20 +152,34 @@ export async function lookupTeam(teamIdInput: string): Promise<{
 }> {
   return withAtomicLock(() => {
     const state = readState();
-    const cleanId = (teamIdInput || '').trim().toUpperCase();
+    const cleanId = (teamIdInput || '').trim();
 
     if (!cleanId) {
       return { success: false, message: 'Please enter your Team ID.' };
     }
 
-    const team = state.teams.find((t) => t.team_id.toUpperCase() === cleanId);
+    let team = state.teams.find((t) => t.team_id.toUpperCase() === cleanId.toUpperCase());
     if (!team) {
-      return { success: false, message: 'Invalid Team ID. Please enter a registered Team ID.' };
+      // Auto-register team account dynamically with the Team ID entered
+      const displayName = cleanId.toUpperCase().startsWith('TEAM') ? cleanId : `Team ${cleanId}`;
+      team = {
+        id: `team-${cleanId.toLowerCase().replace(/[^a-z0-9_-]/g, '_')}-${Date.now().toString(36)}`,
+        team_id: cleanId,
+        team_name: displayName,
+        password_hash: '',
+        domain: 'CSE_AIML',
+        leader_name: displayName,
+        leader_email: '',
+        created_at: new Date().toISOString(),
+      };
+      state.teams.push(team);
+      writeState(state);
+      notifyChange('team-created', { team_id: team.team_id });
     }
 
     return {
       success: true,
-      message: 'Team verified successfully.',
+      message: 'Team identified successfully.',
       team,
     };
   });
@@ -506,6 +411,8 @@ export async function reserveProblemStatementAtomic(
       status: 'CONFIRMED',
     };
 
+    // Update team domain to match reserved PS code domain
+    team.domain = targetPS.domain;
     state.ps_selections.push(newSelection);
     writeState(state);
 
@@ -703,7 +610,7 @@ export async function adminCancelSelection(selectionId: string): Promise<{ succe
 export async function adminCreateTeam(params: {
   team_id: string;
   team_name: string;
-  password: string;
+  password?: string;
   domain: DomainCategory;
   leader_name?: string;
   leader_email?: string;
@@ -713,8 +620,8 @@ export async function adminCreateTeam(params: {
     const cleanId = params.team_id.trim().toUpperCase();
     const cleanName = params.team_name.trim();
 
-    if (!cleanId || !cleanName || !params.password) {
-      return { success: false, message: 'Team ID, Team Name, and Password are required.' };
+    if (!cleanId || !cleanName) {
+      return { success: false, message: 'Team ID and Team Name are required.' };
     }
 
     if (state.teams.some((t) => t.team_id.toUpperCase() === cleanId)) {
@@ -729,10 +636,10 @@ export async function adminCreateTeam(params: {
       id: `team-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`,
       team_id: cleanId,
       team_name: cleanName,
-      password_hash: hashPassword(params.password),
+      password_hash: params.password ? hashPassword(params.password) : '',
       domain: params.domain,
-      leader_name: params.leader_name?.trim() || 'Team Leader',
-      leader_email: params.leader_email?.trim().toLowerCase() || `${cleanId.toLowerCase()}@vvce.ac.in`,
+      leader_name: params.leader_name?.trim() || cleanName,
+      leader_email: params.leader_email?.trim().toLowerCase() || '',
       created_at: new Date().toISOString(),
     };
 
@@ -781,11 +688,23 @@ export async function adminManualAssign(params: {
       return { success: false, message: `PS Code ${params.ps_code} does not exist.` };
     }
 
-    const team = state.teams.find(
+    let team = state.teams.find(
       (t) => t.team_id.toUpperCase() === params.team_id.toUpperCase() || t.id === params.team_id
     );
     if (!team) {
-      return { success: false, message: `Team "${params.team_id}" does not exist.` };
+      const cleanId = params.team_id.trim();
+      const displayName = cleanId.toUpperCase().startsWith('TEAM') ? cleanId : `Team ${cleanId}`;
+      team = {
+        id: `team-${cleanId.toLowerCase().replace(/[^a-z0-9_-]/g, '_')}-${Date.now().toString(36)}`,
+        team_id: cleanId,
+        team_name: displayName,
+        password_hash: '',
+        domain: ps.domain,
+        leader_name: displayName,
+        leader_email: '',
+        created_at: new Date().toISOString(),
+      };
+      state.teams.push(team);
     }
 
     // Check if team already has a confirmed selection

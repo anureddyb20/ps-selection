@@ -9,9 +9,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { team_id } = body;
 
-    if (!team_id) {
+    if (!team_id || typeof team_id !== 'string' || !team_id.trim()) {
       return NextResponse.json(
-        { success: false, message: 'Invalid Team ID. Please enter a registered Team ID.' },
+        { success: false, message: 'Please enter your Team ID.' },
         { status: 400 }
       );
     }
@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
     const lookupResult = await lookupTeam(team_id);
     if (!lookupResult.success || !lookupResult.team) {
       return NextResponse.json(
-        { success: false, message: 'Invalid Team ID. Please enter a registered Team ID.' },
-        { status: 404 }
+        { success: false, message: lookupResult.message || 'Unable to identify team. Please try again.' },
+        { status: 400 }
       );
     }
 

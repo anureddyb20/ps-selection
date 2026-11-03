@@ -939,14 +939,6 @@ export default function AdminPage() {
                     <span>Create Team</span>
                   </button>
 
-                  <button
-                    onClick={handleSeedTeams}
-                    className="px-3 py-1.5 rounded-lg bg-ops-card hover:bg-ops-cardHover border border-ops-border text-slate-200 text-xs font-bold"
-                    title="Seed Default Demo Teams"
-                  >
-                    <span>Seed Demo Teams</span>
-                  </button>
-
                   <a
                     href="/api/export?format=csv"
                     className="px-3 py-1.5 rounded-lg bg-ops-card hover:bg-ops-cardHover border border-ops-border text-slate-200 text-xs font-bold flex items-center gap-1"
@@ -1008,7 +1000,7 @@ export default function AdminPage() {
                       ) : (
                         <tr>
                           <td colSpan={7} className="py-8 text-center text-slate-500 italic">
-                            No team accounts found.
+                            No team accounts registered yet. Teams will automatically appear here once they access the portal and select their problem statement.
                           </td>
                         </tr>
                       )}
@@ -1265,19 +1257,6 @@ export default function AdminPage() {
                   <option value="ECE">Electronics and Communication</option>
                   <option value="MECH_CIVIL">Mechanical and Civil</option>
                 </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] uppercase tracking-wider text-ops-cyan mb-1">
-                  Initial Password
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newTeamPassword}
-                  onChange={(e) => setNewTeamPassword(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs"
-                />
               </div>
 
               <div className="grid grid-cols-2 gap-2">

@@ -44,6 +44,13 @@ async function runAllTests() {
   // Reset to clean pristine state
   await adminResetAllData();
 
+  // Test 0: Verify NO pre-seeded team accounts exist
+  const initialAdmin = await getAdminDashboardData();
+  assert(
+    initialAdmin.teams.length === 0,
+    'Requirement 0: Database starts with zero pre-seeded dummy team accounts'
+  );
+
   // Test 1: Exactly 30 PS codes are initialized
   const initialData = await getPublicProblemStatements();
   assert(
@@ -83,63 +90,65 @@ async function runAllTests() {
     sampleItem.sih_number === undefined;
   assert(isSanitized, 'Requirement 7: Participating teams see ONLY PS codes (titles/descriptions strictly hidden)');
 
-  // Test 8: Team ID Lookup & Validation (No password)
-  const validLookup = await lookupTeam('TEAM-101');
+  // Test 8: Dynamic Team ID Entry (No pre-existing accounts required)
+  const team101Lookup = await lookupTeam('101');
   assert(
-    validLookup.success && validLookup.team?.team_id === 'TEAM-101' && validLookup.team?.team_name === 'Neural Knights',
-    'Requirement 8: Valid Team ID lookup succeeds and retrieves team details'
+    team101Lookup.success && team101Lookup.team?.team_id === '101' && team101Lookup.team?.team_name === 'Team 101',
+    'Requirement 8: Entering any Team ID (e.g. 101) succeeds dynamically and registers on the fly'
   );
 
-  const invalidLookup = await lookupTeam('NONEXISTENT-TEAM');
+  const emptyLookup = await lookupTeam('   ');
   assert(
-    !invalidLookup.success && invalidLookup.message === 'Invalid Team ID. Please enter a registered Team ID.',
-    'Requirement 8b: Invalid Team ID displays exact required message: "Invalid Team ID. Please enter a registered Team ID."'
+    !emptyLookup.success && emptyLookup.message === 'Please enter your Team ID.',
+    'Requirement 8b: Empty Team ID prompt requires valid input'
   );
 
   // Test 9: Team Session cryptographic token
-  const teamToken = createTeamSessionToken(validLookup.team!);
+  const teamToken = createTeamSessionToken(team101Lookup.team!);
   const decodedSession = verifyTeamSessionToken(teamToken);
-  assert(decodedSession?.team_id === 'TEAM-101', 'Requirement 9: Team session token signs and verifies correctly');
+  assert(decodedSession?.team_id === '101', 'Requirement 9: Team session token signs and verifies correctly');
 
   // Test 10 & 11: Slot 1/2 and Slot 2/2 allocation
   const res1 = await reserveProblemStatementAtomic({
-    team_id: 'team-cs-101',
+    team_id: team101Lookup.team!.id,
     ps_code: 'CS-01',
   });
-  assert(res1.success && res1.occupied_count === 1, 'Requirement 10: Team 1 occupies slot 1/2 on CS-01');
+  assert(res1.success && res1.occupied_count === 1, 'Requirement 10: Team 101 occupies slot 1/2 on CS-01');
 
+  const team102Lookup = await lookupTeam('102');
   const res2 = await reserveProblemStatementAtomic({
-    team_id: 'team-cs-102',
+    team_id: team102Lookup.team!.id,
     ps_code: 'CS-01',
   });
-  assert(res2.success && res2.occupied_count === 2 && res2.status === 'FULL', 'Requirement 11: Team 2 occupies slot 2/2 on CS-01 (marked FULL)');
+  assert(res2.success && res2.occupied_count === 2 && res2.status === 'FULL', 'Requirement 11: Team 102 occupies slot 2/2 on CS-01 (marked FULL)');
 
   // Test 12: Third team CANNOT select that code (Strict 2-team limit)
+  const team103Lookup = await lookupTeam('103');
   const res3 = await reserveProblemStatementAtomic({
-    team_id: 'team-cs-103',
+    team_id: team103Lookup.team!.id,
     ps_code: 'CS-01',
   });
   assert(!res3.success && res3.message.includes('filled'), 'Requirement 12: Third team rejected when PS has reached 2/2 capacity');
 
-  // Test 13: One PS per team (Team 1 cannot select another PS)
+  // Test 13: One PS per team (Team 101 cannot select another PS)
   const resDuplicate = await reserveProblemStatementAtomic({
-    team_id: 'team-cs-101',
+    team_id: team101Lookup.team!.id,
     ps_code: 'CS-02',
   });
   assert(!resDuplicate.success && resDuplicate.message.includes('already reserved'), 'Requirement 13: Team cannot select multiple PS codes (Strict 1-PS per team enforced)');
 
   // Test 14: Race Condition / Concurrency test
   console.log('Testing concurrency on EC-01 with simultaneous requests...');
-  await adminCreateTeam({ team_id: 'CONC-1', team_name: 'Concurrent Team 1', password: 'pass', domain: 'ECE' });
-  await adminCreateTeam({ team_id: 'CONC-2', team_name: 'Concurrent Team 2', password: 'pass', domain: 'ECE' });
-  await adminCreateTeam({ team_id: 'CONC-3', team_name: 'Concurrent Team 3', password: 'pass', domain: 'ECE' });
-  await adminCreateTeam({ team_id: 'CONC-4', team_name: 'Concurrent Team 4', password: 'pass', domain: 'ECE' });
+  const conc1 = (await lookupTeam('CONC-1')).team!;
+  const conc2 = (await lookupTeam('CONC-2')).team!;
+  const conc3 = (await lookupTeam('CONC-3')).team!;
+  const conc4 = (await lookupTeam('CONC-4')).team!;
 
   const concurrentAttempts = await Promise.all([
-    reserveProblemStatementAtomic({ team_id: 'CONC-1', ps_code: 'EC-01' }),
-    reserveProblemStatementAtomic({ team_id: 'CONC-2', ps_code: 'EC-01' }),
-    reserveProblemStatementAtomic({ team_id: 'CONC-3', ps_code: 'EC-01' }),
-    reserveProblemStatementAtomic({ team_id: 'CONC-4', ps_code: 'EC-01' }),
+    reserveProblemStatementAtomic({ team_id: conc1.id, ps_code: 'EC-01' }),
+    reserveProblemStatementAtomic({ team_id: conc2.id, ps_code: 'EC-01' }),
+    reserveProblemStatementAtomic({ team_id: conc3.id, ps_code: 'EC-01' }),
+    reserveProblemStatementAtomic({ team_id: conc4.id, ps_code: 'EC-01' }),
   ]);
 
   const successfulConcurrent = concurrentAttempts.filter((r) => r.success);
@@ -149,9 +158,14 @@ async function runAllTests() {
     `Successful: ${successfulConcurrent.length}`
   );
 
-  // Test 15: Admin Dashboard can view all selections
+  // Test 15: Admin Dashboard can view all selections and team IDs
   const adminData = await getAdminDashboardData();
-  assert(adminData.selections.length === 4, 'Requirement 15: Admin can view all selection records');
+  const sel101 = adminData.selections.find((s) => s.team_code === '101' && s.ps_code === 'CS-01');
+  const sel102 = adminData.selections.find((s) => s.team_code === '102' && s.ps_code === 'CS-01');
+  assert(
+    Boolean(sel101 && sel102 && adminData.selections.length === 4),
+    'Requirement 15: Team ID (101, 102) and confirmed PS codes (CS-01) are strictly visible in Admin Portal'
+  );
 
   // Test 16: Admin cancel selection & slot reopens
   const targetSel = adminData.selections.find((s) => s.ps_code === 'CS-01');

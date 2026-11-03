@@ -16,10 +16,10 @@ export default function TeamEntry({ onTeamVerified }: TeamEntryProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanId = teamId.trim().toUpperCase();
+    const cleanId = teamId.trim();
 
     if (!cleanId) {
-      setErrorMessage('Invalid Team ID. Please enter a registered Team ID.');
+      setErrorMessage('Please enter your Team ID.');
       return;
     }
 
@@ -38,7 +38,7 @@ export default function TeamEntry({ onTeamVerified }: TeamEntryProps) {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        setErrorMessage(data.message || 'Invalid Team ID. Please enter a registered Team ID.');
+        setErrorMessage(data.message || 'Unable to access with Team ID. Please try again.');
         setLoading(false);
         return;
       }
@@ -64,7 +64,7 @@ export default function TeamEntry({ onTeamVerified }: TeamEntryProps) {
             ENTER YOUR TEAM ID
           </h1>
           <p className="text-xs text-ops-textMuted mt-2 font-mono">
-            Enter your registered Team ID to access Problem Statement Selection.
+            Enter your Team ID to access Problem Statement Selection.
           </p>
         </div>
 
@@ -98,7 +98,7 @@ export default function TeamEntry({ onTeamVerified }: TeamEntryProps) {
                   type="text"
                   required
                   autoFocus
-                  placeholder="Enter your Team ID (e.g., TEAM-101)"
+                  placeholder="Enter your Team ID (e.g., 101, TEAM-01)"
                   value={teamId}
                   onChange={(e) => {
                     setTeamId(e.target.value);
