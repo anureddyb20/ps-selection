@@ -301,8 +301,27 @@
       "updated_at": "2026-11-03T19:57:38.865Z"
     }
   ],
-  "teams": [],
-  "ps_selections": [],
+  "teams": [
+    {
+      "id": "team-101-mw143cgf",
+      "team_id": "101",
+      "team_name": "101",
+      "password_hash": "",
+      "domain": "MECH_CIVIL",
+      "leader_name": "",
+      "leader_email": "",
+      "created_at": "2026-11-03T19:59:45.615Z"
+    }
+  ],
+  "ps_selections": [
+    {
+      "id": "sel-1793736003034-266641",
+      "team_id": "team-101-mw143cgf",
+      "problem_statement_id": "ps-me-01-26",
+      "selected_at": "2026-11-03T20:00:03.034Z",
+      "status": "CONFIRMED"
+    }
+  ],
   "admin_settings": {
     "id": 1,
     "portal_published": true,
@@ -311,5 +330,5 @@
     "one_ps_per_team": true,
     "updated_at": "2026-11-03T19:57:38.865Z"
   },
-  "version": 2
+  "version": 4
 }
