@@ -311,6 +311,16 @@
       "leader_name": "",
       "leader_email": "",
       "created_at": "2026-11-03T20:06:20.371Z"
+    },
+    {
+      "id": "team-102-mw15jwk2",
+      "team_id": "102",
+      "team_name": "102",
+      "password_hash": "",
+      "domain": "CSE_AIML",
+      "leader_name": "",
+      "leader_email": "",
+      "created_at": "2026-11-03T20:40:37.778Z"
     }
   ],
   "ps_selections": [
@@ -319,6 +329,13 @@
       "team_id": "team-101-mw14bt1v",
       "problem_statement_id": "ps-me-02-27",
       "selected_at": "2026-11-03T20:06:27.415Z",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "sel-1793738444565-8abcd4",
+      "team_id": "team-102-mw15jwk2",
+      "problem_statement_id": "ps-cs-03-3",
+      "selected_at": "2026-11-03T20:40:44.565Z",
       "status": "CONFIRMED"
     }
   ],
@@ -330,5 +347,5 @@
     "one_ps_per_team": true,
     "updated_at": "2026-11-03T20:18:21.917Z"
   },
-  "version": 3
+  "version": 5
 }

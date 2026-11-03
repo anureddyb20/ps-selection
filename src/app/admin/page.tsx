@@ -316,7 +316,7 @@ export default function AdminPage() {
               Organizer Admin Desk
             </h1>
             <p className="text-xs text-ops-textMuted mt-1">
-              Ideathon VVCE Problem Statement Operations
+              Vice Verse Problem Statement Operations
             </p>
           </div>
 
@@ -395,7 +395,7 @@ export default function AdminPage() {
                 Admin Desk
               </h2>
               <span className="text-[10px] text-ops-cyan font-mono tracking-widest uppercase">
-                IDEATHON VVCE 2026
+                VICE VERSE 2026
               </span>
             </div>
           </div>

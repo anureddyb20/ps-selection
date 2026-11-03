@@ -66,7 +66,7 @@ export default function DomainNav({
         <div className="flex items-center gap-4 text-xs font-mono">
           <div className="flex items-center gap-1.5 text-ops-cyan">
             <Wifi className="w-3.5 h-3.5" />
-            <span>VVCE Network Sync</span>
+            <span>Vice Verse Network Sync</span>
           </div>
           <span className="text-ops-yellow font-bold flex items-center gap-1">
             <span>Realtime Live</span>

@@ -1,5 +1,5 @@
 -- ====================================================================
--- IDEATHON VVCE 2026: PROBLEM STATEMENT SELECTION PORTAL
+-- VICE VERSE 2026: PROBLEM STATEMENT SELECTION PORTAL
 -- PostgreSQL / Supabase Schema & Atomic Selection Stored Procedure
 -- ====================================================================
 

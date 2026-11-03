@@ -168,7 +168,7 @@ export default function HomePage() {
               </span>
             </div>
             <span className="text-[11px] font-mono text-ops-textMuted uppercase tracking-widest hidden sm:inline-block">
-              IDEATHON VVCE 2026
+              VICE VERSE 2026
             </span>
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function HomePage() {
 
         <footer className="border-t border-ops-border py-8 px-6 text-xs font-mono text-ops-textMuted bg-ops-panel mt-16">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p>© 2026 Vidyavardhaka College of Engineering. Ideathon VVCE Problem Statement Selection Desk.</p>
+            <p>© 2026 Vice Verse Problem Statement Selection Desk.</p>
             <p className="text-slate-500">Atomic PostgreSQL Enforced • Real-time Synchronized</p>
           </div>
         </footer>
@@ -345,7 +345,7 @@ export default function HomePage() {
 
       <footer className="border-t border-ops-border py-8 px-6 text-xs font-mono text-ops-textMuted bg-ops-panel mt-16">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 Vidyavardhaka College of Engineering. Ideathon VVCE Problem Statement Selection Desk.</p>
+          <p>© 2026 Vice Verse Problem Statement Selection Desk.</p>
           <p className="text-slate-500">Atomic PostgreSQL Enforced • Real-time Synchronized</p>
         </div>
       </footer>

@@ -1,5 +1,5 @@
 /**
- * IDEATHON VVCE: COMPREHENSIVE AUTOMATED VERIFICATION SCRIPT
+ * VICE VERSE: COMPREHENSIVE AUTOMATED VERIFICATION SCRIPT
  * Tests Team ID Entry, PS Selection, 2-Team Capacity Limit, Concurrency, and Admin Operations
  */
 
@@ -41,7 +41,7 @@ function assert(condition: boolean, testName: string, detail?: string) {
 
 async function runAllTests() {
   console.log('\n======================================================');
-  console.log('IDEATHON VVCE: TEAM ID LOOKUP & SELECTION VERIFICATION');
+  console.log('VICE VERSE: TEAM ID LOOKUP & SELECTION VERIFICATION');
   console.log('======================================================\n');
 
   // Backup existing data so tests don't overwrite user selections

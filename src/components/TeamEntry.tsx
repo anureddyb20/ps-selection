@@ -58,7 +58,7 @@ export default function TeamEntry({ onTeamVerified }: TeamEntryProps) {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-ops-cyan/10 border border-ops-cyan/30 text-ops-cyan text-[11px] font-mono tracking-widest uppercase mb-4">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>IDEATHON VVCE 2026 // TEAM ACCESS</span>
+            <span>VICE VERSE 2026 // TEAM ACCESS</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight uppercase font-mono">
             ENTER YOUR TEAM ID

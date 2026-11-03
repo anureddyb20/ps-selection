@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse(csvContent, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename="Ideathon_VVCE_PS_Selections_${new Date().toISOString().slice(0, 10)}.csv"`,
+        'Content-Disposition': `attachment; filename="Vice_Verse_PS_Selections_${new Date().toISOString().slice(0, 10)}.csv"`,
       },
     });
   }
@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
       </style>
     </head>
     <body>
-      <h2>IDEATHON VVCE - PROBLEM STATEMENT SELECTION MASTER REPORT</h2>
+      <h2>VICE VERSE - PROBLEM STATEMENT SELECTION MASTER REPORT</h2>
       <p>Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
       <table>
         <thead>
@@ -121,7 +121,7 @@ export async function GET(req: NextRequest) {
   return new NextResponse(excelContent, {
     headers: {
       'Content-Type': 'application/vnd.ms-excel; charset=utf-8',
-      'Content-Disposition': `attachment; filename="Ideathon_VVCE_PS_Selections_${new Date().toISOString().slice(0, 10)}.xls"`,
+      'Content-Disposition': `attachment; filename="Vice_Verse_PS_Selections_${new Date().toISOString().slice(0, 10)}.xls"`,
     },
   });
 }

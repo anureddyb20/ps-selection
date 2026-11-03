@@ -6,7 +6,7 @@ export interface PredefinedPS {
   sub_domain: SubDomain | null;
 }
 
-// Exactly 30 PS Codes as mandated by Ideathon VVCE specifications
+// Exactly 30 PS Codes as mandated by Vice Verse specifications
 export const INITIAL_PROBLEM_STATEMENTS: PredefinedPS[] = [
   // DOMAIN 1: CSE / AIML (15 Codes)
   { ps_code: 'CS-01', domain: 'CSE_AIML', sub_domain: null },

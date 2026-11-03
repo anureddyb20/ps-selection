@@ -379,7 +379,7 @@ export async function reserveProblemStatementAtomic(
     if (!targetPS) {
       return {
         success: false,
-        message: `Invalid PS Code "${ps_code}". Please select from the official Ideathon VVCE PS codes.`,
+        message: `Invalid PS Code "${ps_code}". Please select from the official Vice Verse PS codes.`,
       };
     }
 
