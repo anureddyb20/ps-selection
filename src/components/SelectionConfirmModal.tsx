@@ -105,10 +105,6 @@ export default function SelectionConfirmModal({
             <span className="text-ops-textMuted">Team Identifier:</span>
             <span className="text-white font-bold">{team.team_id}</span>
           </div>
-          <div className="flex justify-between items-center pb-2 border-b border-ops-border/60">
-            <span className="text-ops-textMuted">Team Name:</span>
-            <span className="text-white font-bold">{team.team_name}</span>
-          </div>
           <div className="flex justify-between items-center">
             <span className="text-ops-textMuted">Slot Allocation:</span>
             <span className="text-ops-yellow font-bold">1 of 2 Max Slots</span>

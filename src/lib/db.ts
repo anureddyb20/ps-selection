@@ -161,14 +161,13 @@ export async function lookupTeam(teamIdInput: string): Promise<{
     let team = state.teams.find((t) => t.team_id.toUpperCase() === cleanId.toUpperCase());
     if (!team) {
       // Auto-register team account dynamically with the Team ID entered
-      const displayName = cleanId.toUpperCase().startsWith('TEAM') ? cleanId : `Team ${cleanId}`;
       team = {
         id: `team-${cleanId.toLowerCase().replace(/[^a-z0-9_-]/g, '_')}-${Date.now().toString(36)}`,
         team_id: cleanId,
-        team_name: displayName,
+        team_name: cleanId,
         password_hash: '',
         domain: 'CSE_AIML',
-        leader_name: displayName,
+        leader_name: '',
         leader_email: '',
         created_at: new Date().toISOString(),
       };
@@ -693,14 +692,13 @@ export async function adminManualAssign(params: {
     );
     if (!team) {
       const cleanId = params.team_id.trim();
-      const displayName = cleanId.toUpperCase().startsWith('TEAM') ? cleanId : `Team ${cleanId}`;
       team = {
         id: `team-${cleanId.toLowerCase().replace(/[^a-z0-9_-]/g, '_')}-${Date.now().toString(36)}`,
         team_id: cleanId,
-        team_name: displayName,
+        team_name: cleanId,
         password_hash: '',
         domain: ps.domain,
-        leader_name: displayName,
+        leader_name: '',
         leader_email: '',
         created_at: new Date().toISOString(),
       };

@@ -258,11 +258,8 @@ export default function AdminPage() {
         body: JSON.stringify({
           action: 'create-team',
           team_id: newTeamId,
-          team_name: newTeamName,
-          password: newTeamPassword,
+          team_name: newTeamId,
           domain: newTeamDomain,
-          leader_name: newTeamLeader,
-          leader_email: newTeamEmail,
         }),
       });
 
@@ -271,9 +268,6 @@ export default function AdminPage() {
         showToast(data.message);
         setCreateTeamModal(false);
         setNewTeamId('');
-        setNewTeamName('');
-        setNewTeamLeader('');
-        setNewTeamEmail('');
         fetchDashboardData();
       } else {
         setCreateTeamError(data.message || 'Failed to create team account.');
@@ -359,10 +353,7 @@ export default function AdminPage() {
       const matchesDomain = teamDomainFilter === 'ALL' || t.domain === teamDomainFilter;
       const q = teamSearch.toLowerCase().trim();
       const matchesSearch = q
-        ? t.team_name.toLowerCase().includes(q) ||
-          t.team_id.toLowerCase().includes(q) ||
-          t.leader_name.toLowerCase().includes(q) ||
-          t.leader_email.toLowerCase().includes(q) ||
+        ? t.team_id.toLowerCase().includes(q) ||
           t.ps_code.toLowerCase().includes(q)
         : true;
       return matchesDomain && matchesSearch;
@@ -857,7 +848,7 @@ export default function AdminPage() {
                               <div className="space-y-1">
                                 {ps.teams.map((t, idx) => (
                                   <div key={idx} className="font-bold text-white">
-                                    • {t.team_id} ({t.team_name})
+                                    • {t.team_id}
                                   </div>
                                 ))}
                               </div>
@@ -964,10 +955,7 @@ export default function AdminPage() {
                     <thead className="bg-ops-card text-ops-textMuted uppercase border-b border-ops-border text-[10px] tracking-wider">
                       <tr>
                         <th className="py-3 px-4">Team ID</th>
-                        <th className="py-3 px-4">Team Name</th>
                         <th className="py-3 px-4">Domain</th>
-                        <th className="py-3 px-4">Leader Name</th>
-                        <th className="py-3 px-4">Leader Email</th>
                         <th className="py-3 px-4">Selected PS</th>
                         <th className="py-3 px-4">Status</th>
                       </tr>
@@ -977,10 +965,7 @@ export default function AdminPage() {
                         filteredTeams.map((t) => (
                           <tr key={t.id} className="hover:bg-ops-card/40 transition-colors">
                             <td className="py-3 px-4 font-bold text-ops-yellow">{t.team_id}</td>
-                            <td className="py-3 px-4 font-bold text-white">{t.team_name}</td>
                             <td className="py-3 px-4">{t.domain}</td>
-                            <td className="py-3 px-4">{t.leader_name}</td>
-                            <td className="py-3 px-4 text-slate-400">{t.leader_email}</td>
                             <td className="py-3 px-4 font-bold text-ops-cyan">
                               {t.ps_code !== 'N/A' ? t.ps_code : '—'}
                             </td>
@@ -999,7 +984,7 @@ export default function AdminPage() {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={7} className="py-8 text-center text-slate-500 italic">
+                          <td colSpan={4} className="py-8 text-center text-slate-500 italic">
                             No team accounts registered yet. Teams will automatically appear here once they access the portal and select their problem statement.
                           </td>
                         </tr>
@@ -1044,8 +1029,6 @@ export default function AdminPage() {
                         <th className="py-3 px-4">PS Code</th>
                         <th className="py-3 px-4">Domain</th>
                         <th className="py-3 px-4">Team ID</th>
-                        <th className="py-3 px-4">Team Name</th>
-                        <th className="py-3 px-4">Leader Name</th>
                         <th className="py-3 px-4">Timestamp</th>
                         <th className="py-3 px-4">Status</th>
                         <th className="py-3 px-4">Action</th>
@@ -1058,8 +1041,6 @@ export default function AdminPage() {
                             <td className="py-3 px-4 font-bold text-ops-cyan text-sm">{s.ps_code}</td>
                             <td className="py-3 px-4">{s.domain}</td>
                             <td className="py-3 px-4 font-bold text-ops-yellow">{s.team_code}</td>
-                            <td className="py-3 px-4 font-bold text-white">{s.team_name}</td>
-                            <td className="py-3 px-4">{s.leader_name}</td>
                             <td className="py-3 px-4 text-slate-400">
                               {new Date(s.selected_at).toLocaleTimeString('en-IN', {
                                 hour: '2-digit',
@@ -1073,7 +1054,7 @@ export default function AdminPage() {
                             </td>
                             <td className="py-3 px-4">
                               <button
-                                onClick={() => handleCancelSelection(s.id, s.team_name, s.ps_code)}
+                                onClick={() => handleCancelSelection(s.id, s.team_code, s.ps_code)}
                                 className="px-2 py-1 rounded ops-badge-magenta text-[10px] font-bold flex items-center gap-1"
                               >
                                 <Trash2 className="w-3 h-3" />
@@ -1084,7 +1065,7 @@ export default function AdminPage() {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={8} className="py-8 text-center text-slate-500 italic">
+                          <td colSpan={6} className="py-8 text-center text-slate-500 italic">
                             No confirmed selections yet.
                           </td>
                         </tr>
@@ -1223,23 +1204,9 @@ export default function AdminPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. TEAM-106"
+                  placeholder="e.g. 101 or TEAM-106"
                   value={newTeamId}
                   onChange={(e) => setNewTeamId(e.target.value.toUpperCase())}
-                  className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] uppercase tracking-wider text-ops-cyan mb-1">
-                  Team Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. ByteBusters"
-                  value={newTeamName}
-                  onChange={(e) => setNewTeamName(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs"
                 />
               </div>
@@ -1257,33 +1224,6 @@ export default function AdminPage() {
                   <option value="ECE">Electronics and Communication</option>
                   <option value="MECH_CIVIL">Mechanical and Civil</option>
                 </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-ops-cyan mb-1">
-                    Leader Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Leader Name"
-                    value={newTeamLeader}
-                    onChange={(e) => setNewTeamLeader(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-ops-cyan mb-1">
-                    Leader Email
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="leader@vvce.ac.in"
-                    value={newTeamEmail}
-                    onChange={(e) => setNewTeamEmail(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs"
-                  />
-                </div>
               </div>
 
               <div className="flex items-center gap-3 pt-3">
@@ -1357,7 +1297,7 @@ export default function AdminPage() {
                     .filter((t) => t.ps_code === 'N/A')
                     .map((t) => (
                       <option key={t.id} value={t.team_id}>
-                        {t.team_id} – {t.team_name} ({t.domain})
+                        {t.team_id} ({t.domain})
                       </option>
                     ))}
                 </select>

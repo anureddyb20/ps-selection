@@ -53,11 +53,10 @@ export default function TeamDashboardHeader({
             </div>
 
             {/* Team Identity Pill */}
-            <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-ops-card border border-ops-borderLight text-xs font-mono text-slate-200">
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-ops-card border border-ops-borderLight text-xs font-mono text-slate-200">
               <div className="w-2 h-2 rounded-full bg-ops-yellow" />
+              <span className="text-ops-textMuted uppercase text-[10px]">TEAM:</span>
               <span className="font-bold text-ops-yellow">{team.team_id}</span>
-              <span className="text-slate-400">|</span>
-              <span className="text-white font-medium max-w-[150px] truncate">{team.team_name}</span>
             </div>
 
             {/* Selection Status Badge */}

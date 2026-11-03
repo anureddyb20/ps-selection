@@ -73,10 +73,6 @@ export default function LockedSelectionView({ team }: LockedSelectionViewProps) 
             <span className="font-bold text-ops-yellow">{team.team_id}</span>
           </div>
           <div className="flex justify-between items-center pb-2 border-b border-ops-border/60">
-            <span className="text-ops-textMuted">Team Name:</span>
-            <span className="font-bold text-white">{team.team_name}</span>
-          </div>
-          <div className="flex justify-between items-center pb-2 border-b border-ops-border/60">
             <span className="text-ops-textMuted">Domain Category:</span>
             <span className="text-slate-300 font-semibold">{selection.domain}</span>
           </div>

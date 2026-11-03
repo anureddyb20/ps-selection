@@ -14,7 +14,6 @@ import {
   Search,
   Loader2,
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 export default function HomePage() {
   const [currentTeam, setCurrentTeam] = useState<TeamPublicProfile | null>(null);
@@ -103,11 +102,6 @@ export default function HomePage() {
 
   const handleSelectionSuccess = (data: any) => {
     setActiveModalItem(null);
-    confetti({
-      particleCount: 120,
-      spread: 80,
-      origin: { y: 0.6 },
-    });
     checkTeamSession();
     fetchPSData();
   };

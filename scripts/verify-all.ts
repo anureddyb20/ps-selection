@@ -93,7 +93,7 @@ async function runAllTests() {
   // Test 8: Dynamic Team ID Entry (No pre-existing accounts required)
   const team101Lookup = await lookupTeam('101');
   assert(
-    team101Lookup.success && team101Lookup.team?.team_id === '101' && team101Lookup.team?.team_name === 'Team 101',
+    team101Lookup.success && team101Lookup.team?.team_id === '101' && team101Lookup.team?.team_name === '101',
     'Requirement 8: Entering any Team ID (e.g. 101) succeeds dynamically and registers on the fly'
   );
 
