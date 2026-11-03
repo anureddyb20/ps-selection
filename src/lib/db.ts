@@ -136,9 +136,20 @@ function readState(): DatabaseState {
 function writeState(state: DatabaseState): void {
   ensureDirectory();
   state.version = (state.version || 0) + 1;
-  const tempPath = `${DATA_FILE}.tmp.${Date.now()}.${Math.random().toString(36).slice(2, 7)}`;
-  fs.writeFileSync(tempPath, JSON.stringify(state, null, 2), 'utf-8');
-  fs.renameSync(tempPath, DATA_FILE);
+  const jsonContent = JSON.stringify(state, null, 2);
+  try {
+    fs.writeFileSync(DATA_FILE, jsonContent, 'utf-8');
+  } catch (err) {
+    console.error('Direct write to database failed, attempting fallback write:', err);
+    try {
+      const tempPath = `${DATA_FILE}.tmp`;
+      fs.writeFileSync(tempPath, jsonContent, 'utf-8');
+      fs.copyFileSync(tempPath, DATA_FILE);
+      fs.unlinkSync(tempPath);
+    } catch (fallbackErr) {
+      console.error('Fatal database write error:', fallbackErr);
+    }
+  }
 }
 
 // ====================================================================
@@ -368,7 +379,7 @@ export async function reserveProblemStatementAtomic(
     if (!targetPS) {
       return {
         success: false,
-        message: `Invalid PS Code "${ps_code}". Please select from the official VVCE Ideathon PS codes.`,
+        message: `Invalid PS Code "${ps_code}". Please select from the official Ideathon VVCE PS codes.`,
       };
     }
 
@@ -470,10 +481,24 @@ export async function getAdminDashboardData(): Promise<{
 
     // Build PS statements with assigned teams
     const psWithDetails = state.problem_statements.map((ps) => {
-      const selectionsForPS = activeSelections.filter((s) => s.problem_statement_id === ps.id);
+      const selectionsForPS = activeSelections.filter(
+        (s) => s.problem_statement_id === ps.id || s.problem_statement_id === ps.ps_code
+      );
       const assignedTeams = selectionsForPS
-        .map((s) => state.teams.find((t) => t.id === s.team_id))
-        .filter((t): t is Team => !!t);
+        .map((s) =>
+          state.teams.find(
+            (t) => t.id === s.team_id || t.team_id.toUpperCase() === s.team_id.toUpperCase()
+          ) || {
+            id: s.team_id,
+            team_id: s.team_id,
+            team_name: s.team_id,
+            password_hash: '',
+            domain: ps.domain,
+            leader_name: '',
+            leader_email: '',
+            created_at: s.selected_at,
+          }
+        );
 
       const count = selectionsForPS.length;
       let status: AvailabilityStatus = 'AVAILABLE';
@@ -494,23 +519,30 @@ export async function getAdminDashboardData(): Promise<{
     // Build flat selection records
     const flatSelections: SelectionRecordItem[] = [];
     for (const s of activeSelections) {
-      const ps = state.problem_statements.find((p) => p.id === s.problem_statement_id);
-      const team = state.teams.find((t) => t.id === s.team_id);
-      if (ps && team) {
-        flatSelections.push({
-          id: s.id,
-          ps_code: ps.ps_code,
-          domain: ps.domain,
-          sub_domain: ps.sub_domain,
-          team_id: team.id,
-          team_code: team.team_id,
-          team_name: team.team_name,
-          leader_name: team.leader_name,
-          leader_email: team.leader_email,
-          selected_at: s.selected_at,
-          status: s.status,
-        });
-      }
+      const ps = state.problem_statements.find(
+        (p) => p.id === s.problem_statement_id || p.ps_code === s.problem_statement_id
+      );
+      const team = state.teams.find(
+        (t) => t.id === s.team_id || t.team_id.toUpperCase() === s.team_id.toUpperCase()
+      );
+      const teamCode = team ? team.team_id : s.team_id;
+      const psCode = ps ? ps.ps_code : s.problem_statement_id;
+      const domain = ps ? ps.domain : 'CSE_AIML';
+      const subDomain = ps ? ps.sub_domain : null;
+
+      flatSelections.push({
+        id: s.id,
+        ps_code: psCode,
+        domain,
+        sub_domain: subDomain,
+        team_id: team ? team.id : s.team_id,
+        team_code: teamCode,
+        team_name: teamCode,
+        leader_name: team ? team.leader_name : '',
+        leader_email: team ? team.leader_email : '',
+        selected_at: s.selected_at,
+        status: s.status,
+      });
     }
 
     // Build teams with selection metadata

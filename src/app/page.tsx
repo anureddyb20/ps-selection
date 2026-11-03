@@ -102,6 +102,9 @@ export default function HomePage() {
 
   const handleSelectionSuccess = (data: any) => {
     setActiveModalItem(null);
+    if (data?.team) {
+      setCurrentTeam(data.team);
+    }
     checkTeamSession();
     fetchPSData();
   };
@@ -165,7 +168,7 @@ export default function HomePage() {
               </span>
             </div>
             <span className="text-[11px] font-mono text-ops-textMuted uppercase tracking-widest hidden sm:inline-block">
-              VVCE IDEATHON 2026
+              IDEATHON VVCE 2026
             </span>
           </div>
         </div>
@@ -180,7 +183,33 @@ export default function HomePage() {
   }
 
   // FLOW STEP 2: Team ID is verified -> Display Team Dashboard
-  const hasSelected = Boolean(currentTeam.selection);
+  // If team has already confirmed a PS, immediately display locked confirmation receipt
+  // The catalog of PS codes is completely hidden so team cannot select again
+  if (currentTeam.selection) {
+    return (
+      <div className="min-h-screen flex flex-col bg-ops-bg text-slate-100">
+        <TeamDashboardHeader
+          team={currentTeam}
+          onLogout={handleSwitchTeam}
+          selectionOpen={selectionOpen}
+          portalPublished={portalPublished}
+        />
+
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1 w-full">
+          <LockedSelectionView team={currentTeam} />
+        </main>
+
+        <footer className="border-t border-ops-border py-8 px-6 text-xs font-mono text-ops-textMuted bg-ops-panel mt-16">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p>© 2026 Vidyavardhaka College of Engineering. Ideathon VVCE Problem Statement Selection Desk.</p>
+            <p className="text-slate-500">Atomic PostgreSQL Enforced • Real-time Synchronized</p>
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
+  const hasSelected = false;
 
   return (
     <div className="min-h-screen flex flex-col bg-ops-bg text-slate-100">
@@ -192,8 +221,6 @@ export default function HomePage() {
       />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
-        {/* If team has already selected a PS, showcase their locked selection */}
-        {hasSelected && <LockedSelectionView team={currentTeam} />}
 
         {/* Global Notices if paused */}
         {!portalPublished ? (
@@ -318,7 +345,7 @@ export default function HomePage() {
 
       <footer className="border-t border-ops-border py-8 px-6 text-xs font-mono text-ops-textMuted bg-ops-panel mt-16">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 Vidyavardhaka College of Engineering. VVCE Ideathon Problem Statement Selection Desk.</p>
+          <p>© 2026 Vidyavardhaka College of Engineering. Ideathon VVCE Problem Statement Selection Desk.</p>
           <p className="text-slate-500">Atomic PostgreSQL Enforced • Real-time Synchronized</p>
         </div>
       </footer>

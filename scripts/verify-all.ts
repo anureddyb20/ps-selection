@@ -1,5 +1,5 @@
 /**
- * VVCE IDEATHON: COMPREHENSIVE AUTOMATED VERIFICATION SCRIPT
+ * IDEATHON VVCE: COMPREHENSIVE AUTOMATED VERIFICATION SCRIPT
  * Tests Team ID Entry, PS Selection, 2-Team Capacity Limit, Concurrency, and Admin Operations
  */
 
@@ -23,6 +23,9 @@ import {
   verifyTeamSessionToken,
 } from '../src/lib/auth';
 
+import fs from 'fs';
+import path from 'path';
+
 let passed = 0;
 let failed = 0;
 
@@ -38,11 +41,19 @@ function assert(condition: boolean, testName: string, detail?: string) {
 
 async function runAllTests() {
   console.log('\n======================================================');
-  console.log('VVCE IDEATHON: TEAM ID LOOKUP & SELECTION VERIFICATION');
+  console.log('IDEATHON VVCE: TEAM ID LOOKUP & SELECTION VERIFICATION');
   console.log('======================================================\n');
 
-  // Reset to clean pristine state
-  await adminResetAllData();
+  // Backup existing data so tests don't overwrite user selections
+  const dbPath = path.join(process.cwd(), 'data', 'database.json');
+  let backupContent: string | null = null;
+  if (fs.existsSync(dbPath)) {
+    backupContent = fs.readFileSync(dbPath, 'utf-8');
+  }
+
+  try {
+    // Reset to clean pristine state for test run
+    await adminResetAllData();
 
   // Test 0: Verify NO pre-seeded team accounts exist
   const initialAdmin = await getAdminDashboardData();
@@ -193,6 +204,12 @@ async function runAllTests() {
       cleanData.problem_statements.every((p) => p.occupied_count === 0 && p.status === 'AVAILABLE'),
     'Reset check: Portal restored to pristine initial state (all 30 codes at 0/2)'
   );
+  } finally {
+    // Restore original database state if it had active selections
+    if (backupContent) {
+      fs.writeFileSync(dbPath, backupContent, 'utf-8');
+    }
+  }
 
   console.log('\n------------------------------------------------------');
   console.log(`TOTAL PASSED: ${passed} | TOTAL FAILED: ${failed}`);

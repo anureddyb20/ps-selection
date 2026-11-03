@@ -26,7 +26,7 @@ export default function TeamDashboardHeader({
           {/* Left Title block */}
           <div>
             <div className="flex items-center gap-2 text-ops-cyan text-xs font-mono font-bold tracking-widest uppercase mb-1">
-              <span>VVCE IDEATHON 2026 // SELECTION DESK</span>
+              <span>IDEATHON VVCE 2026 // SELECTION DESK</span>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight uppercase font-mono">
               Problem Statement Selection Portal

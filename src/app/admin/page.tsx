@@ -67,25 +67,13 @@ export default function AdminPage() {
   const [selections, setSelections] = useState<SelectionRecordItem[]>([]);
   const [settings, setSettings] = useState<AdminSettings | null>(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'ps-management' | 'teams' | 'selections' | 'settings'
+    'overview' | 'ps-management' | 'selections' | 'settings'
   >('overview');
 
   // Filters & search
-  const [teamSearch, setTeamSearch] = useState('');
-  const [teamDomainFilter, setTeamDomainFilter] = useState<string>('ALL');
   const [psDomainFilter, setPsDomainFilter] = useState<string>('ALL');
-
-  // Create Team Account Modal
-  const [createTeamModal, setCreateTeamModal] = useState(false);
-  const [newTeamId, setNewTeamId] = useState('');
-  const [newTeamName, setNewTeamName] = useState('');
-  const [newTeamPassword, setNewTeamPassword] = useState('vvce@2026');
-  const [newTeamDomain, setNewTeamDomain] = useState<DomainCategory>('CSE_AIML');
-  const [newTeamLeader, setNewTeamLeader] = useState('');
-  const [newTeamEmail, setNewTeamEmail] = useState('');
-  const [createTeamError, setCreateTeamError] = useState<string | null>(null);
 
   // Manual Assign Modal
   const [manualAssignModal, setManualAssignModal] = useState(false);
@@ -123,6 +111,8 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     fetchDashboardData();
 
     const eventSource = new EventSource('/api/realtime');
@@ -133,7 +123,7 @@ export default function AdminPage() {
     return () => {
       eventSource.close();
     };
-  }, []);
+  }, [isAuthenticated]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -247,53 +237,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleCreateTeamSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreateTeamError(null);
-
-    try {
-      const res = await fetch('/api/admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'create-team',
-          team_id: newTeamId,
-          team_name: newTeamId,
-          domain: newTeamDomain,
-        }),
-      });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        showToast(data.message);
-        setCreateTeamModal(false);
-        setNewTeamId('');
-        fetchDashboardData();
-      } else {
-        setCreateTeamError(data.message || 'Failed to create team account.');
-      }
-    } catch {
-      setCreateTeamError('Network error while creating team account.');
-    }
-  };
-
-  const handleSeedTeams = async () => {
-    try {
-      const res = await fetch('/api/admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'seed-teams' }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        showToast(data.message);
-        fetchDashboardData();
-      }
-    } catch {
-      showToast('Failed to seed teams.', 'error');
-    }
-  };
-
   const handleManualAssignSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setManualAssignError(null);
@@ -313,6 +256,7 @@ export default function AdminPage() {
       if (res.ok && data.success) {
         showToast(data.message);
         setManualAssignModal(false);
+        setManualTeamId('');
         fetchDashboardData();
       } else {
         setManualAssignError(data.message || 'Failed to assign team.');
@@ -347,19 +291,6 @@ export default function AdminPage() {
     }
   };
 
-  // Filtered teams
-  const filteredTeams = useMemo(() => {
-    return teams.filter((t) => {
-      const matchesDomain = teamDomainFilter === 'ALL' || t.domain === teamDomainFilter;
-      const q = teamSearch.toLowerCase().trim();
-      const matchesSearch = q
-        ? t.team_id.toLowerCase().includes(q) ||
-          t.ps_code.toLowerCase().includes(q)
-        : true;
-      return matchesDomain && matchesSearch;
-    });
-  }, [teams, teamDomainFilter, teamSearch]);
-
   const filteredPSCodes = useMemo(() => {
     return problemStatements.filter((p) => {
       if (psDomainFilter === 'ALL') return true;
@@ -385,7 +316,7 @@ export default function AdminPage() {
               Organizer Admin Desk
             </h1>
             <p className="text-xs text-ops-textMuted mt-1">
-              VVCE Ideathon Problem Statement Operations
+              Ideathon VVCE Problem Statement Operations
             </p>
           </div>
 
@@ -464,7 +395,7 @@ export default function AdminPage() {
                 Admin Desk
               </h2>
               <span className="text-[10px] text-ops-cyan font-mono tracking-widest uppercase">
-                VVCE IDEATHON 2026
+                IDEATHON VVCE 2026
               </span>
             </div>
           </div>
@@ -496,21 +427,6 @@ export default function AdminPage() {
           </button>
 
           <button
-            onClick={() => setActiveTab('teams')}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all ${
-              activeTab === 'teams'
-                ? 'ops-card-active text-ops-yellow'
-                : 'text-ops-textMuted hover:text-white hover:bg-ops-card'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>Team Accounts</span>
-            <span className="ml-auto px-2 py-0.5 rounded text-[10px] bg-ops-card border border-ops-border text-ops-cyan">
-              {teams.length}
-            </span>
-          </button>
-
-          <button
             onClick={() => setActiveTab('selections')}
             className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all ${
               activeTab === 'selections'
@@ -520,7 +436,7 @@ export default function AdminPage() {
           >
             <Sliders className="w-4 h-4" />
             <span>Live Selections</span>
-            <span className="ml-auto px-2 py-0.5 rounded text-[10px] bg-ops-card border border-ops-border text-ops-emerald">
+            <span className="ml-auto px-2 py-0.5 rounded text-[10px] bg-ops-card border border-ops-border text-ops-emerald font-bold">
               {selections.length}
             </span>
           </button>
@@ -564,8 +480,7 @@ export default function AdminPage() {
           <h2 className="font-mono font-bold text-sm tracking-wider uppercase text-white">
             {activeTab === 'overview' && 'SYSTEM OVERVIEW // LIVE TELEMETRY'}
             {activeTab === 'ps-management' && 'INVENTORY // 30 PREDEFINED PROBLEM STATEMENTS'}
-            {activeTab === 'teams' && 'TEAM ACCOUNTS & CREDENTIALS'}
-            {activeTab === 'selections' && 'SELECTION ALLOCATIONS'}
+            {activeTab === 'selections' && 'LIVE SELECTION ALLOCATIONS'}
             {activeTab === 'settings' && 'SYSTEM CONTROLS & DESK POLICIES'}
           </h2>
 
@@ -583,7 +498,7 @@ export default function AdminPage() {
           {activeTab === 'overview' && stats && (
             <div className="space-y-6">
               {/* Primary Metric Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 <div className="ops-card p-4 rounded-xl border">
                   <span className="text-[10px] font-mono uppercase tracking-widest text-ops-textMuted">
                     Total PS Codes
@@ -592,16 +507,6 @@ export default function AdminPage() {
                     {stats.total_ps_codes}
                   </div>
                   <span className="text-[10px] font-mono text-ops-cyan">Exact 30 Preserved</span>
-                </div>
-
-                <div className="ops-card p-4 rounded-xl border">
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-ops-textMuted">
-                    Team Accounts
-                  </span>
-                  <div className="text-2xl font-mono font-black text-ops-cyan mt-1">
-                    {stats.total_registered_teams}
-                  </div>
-                  <span className="text-[10px] font-mono text-slate-400">Unique Credentials</span>
                 </div>
 
                 <div className="ops-card p-4 rounded-xl border">
@@ -893,43 +798,20 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* TAB 3: TEAM ACCOUNTS MANAGEMENT */}
-          {activeTab === 'teams' && (
+          {/* TAB: SELECTIONS MANAGEMENT */}
+          {activeTab === 'selections' && (
             <div className="space-y-4 font-mono">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl ops-panel border">
-                <div className="flex flex-wrap items-center gap-3 flex-1">
-                  <div className="relative flex-1 max-w-xs">
-                    <Search className="w-4 h-4 text-ops-textMuted absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      placeholder="Search team ID, name..."
-                      value={teamSearch}
-                      onChange={(e) => setTeamSearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-ops-card border border-ops-border text-xs text-white"
-                    />
-                  </div>
-
-                  <select
-                    value={teamDomainFilter}
-                    onChange={(e) => setTeamDomainFilter(e.target.value)}
-                    className="px-3 py-1.5 rounded-lg bg-ops-card border border-ops-border text-xs text-white"
-                  >
-                    <option value="ALL">All Domains</option>
-                    <option value="CSE_AIML">CSE / AIML</option>
-                    <option value="ECE">ECE</option>
-                    <option value="MECH_CIVIL">Mech & Civil</option>
-                  </select>
+                <div>
+                  <h3 className="font-bold text-white text-xs uppercase tracking-wider">
+                    Confirmed PS Allocations
+                  </h3>
+                  <p className="text-[11px] text-ops-textMuted mt-0.5">
+                    Live record of all confirmed team selections. Cancel a selection to reopen its slot.
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setCreateTeamModal(true)}
-                    className="px-3 py-1.5 rounded-lg bg-ops-cyan text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-cyan-glow"
-                  >
-                    <UserPlus className="w-3.5 h-3.5" />
-                    <span>Create Team</span>
-                  </button>
-
                   <a
                     href="/api/export?format=csv"
                     className="px-3 py-1.5 rounded-lg bg-ops-card hover:bg-ops-cardHover border border-ops-border text-slate-200 text-xs font-bold flex items-center gap-1"
@@ -945,80 +827,18 @@ export default function AdminPage() {
                     <FileSpreadsheet className="w-3.5 h-3.5" />
                     <span>Excel</span>
                   </a>
-                </div>
-              </div>
 
-              {/* Team Table */}
-              <div className="rounded-xl ops-panel border overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-ops-card text-ops-textMuted uppercase border-b border-ops-border text-[10px] tracking-wider">
-                      <tr>
-                        <th className="py-3 px-4">Team ID</th>
-                        <th className="py-3 px-4">Domain</th>
-                        <th className="py-3 px-4">Selected PS</th>
-                        <th className="py-3 px-4">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-ops-border text-slate-200">
-                      {filteredTeams.length > 0 ? (
-                        filteredTeams.map((t) => (
-                          <tr key={t.id} className="hover:bg-ops-card/40 transition-colors">
-                            <td className="py-3 px-4 font-bold text-ops-yellow">{t.team_id}</td>
-                            <td className="py-3 px-4">{t.domain}</td>
-                            <td className="py-3 px-4 font-bold text-ops-cyan">
-                              {t.ps_code !== 'N/A' ? t.ps_code : '—'}
-                            </td>
-                            <td className="py-3 px-4">
-                              {t.ps_code !== 'N/A' ? (
-                                <span className="ops-badge-emerald px-2 py-0.5 rounded text-[10px] font-bold">
-                                  ALLOCATED
-                                </span>
-                              ) : (
-                                <span className="ops-badge-yellow px-2 py-0.5 rounded text-[10px] font-bold">
-                                  PENDING
-                                </span>
-                              )}
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={4} className="py-8 text-center text-slate-500 italic">
-                            No team accounts registered yet. Teams will automatically appear here once they access the portal and select their problem statement.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                  <button
+                    onClick={() => {
+                      setManualPSCode('CS-01');
+                      setManualAssignModal(true);
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-ops-cyan text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-cyan-glow"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Manual Assign Slot</span>
+                  </button>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 4: SELECTIONS MANAGEMENT */}
-          {activeTab === 'selections' && (
-            <div className="space-y-4 font-mono">
-              <div className="flex items-center justify-between p-4 rounded-xl ops-panel border">
-                <div>
-                  <h3 className="font-bold text-white text-xs uppercase tracking-wider">
-                    Confirmed PS Allocations
-                  </h3>
-                  <p className="text-[11px] text-ops-textMuted mt-0.5">
-                    Cancel a selection to immediately reopen its slot for another team.
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setManualPSCode('CS-01');
-                    setManualAssignModal(true);
-                  }}
-                  className="px-3.5 py-2 rounded-xl bg-ops-cyan text-slate-950 font-bold text-xs flex items-center gap-2 shadow-cyan-glow"
-                >
-                  <UserPlus className="w-3.5 h-3.5" />
-                  <span>Manual Assign Slot</span>
-                </button>
               </div>
 
               <div className="rounded-xl ops-panel border overflow-hidden">
@@ -1179,73 +999,6 @@ export default function AdminPage() {
         </div>
       </main>
 
-      {/* CREATE TEAM MODAL */}
-      {createTeamModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="relative w-full max-w-md ops-panel border border-ops-border rounded-2xl p-6 font-mono">
-            <h3 className="text-base font-bold text-white uppercase tracking-wider mb-1">
-              Create Team Account
-            </h3>
-            <p className="text-xs text-ops-textMuted mb-4">
-              Credentials can be issued to participating team leaders.
-            </p>
-
-            {createTeamError && (
-              <div className="ops-alert-rejected p-3 rounded-xl mb-4 text-xs text-slate-200">
-                {createTeamError}
-              </div>
-            )}
-
-            <form onSubmit={handleCreateTeamSubmit} className="space-y-3">
-              <div>
-                <label className="block text-[11px] uppercase tracking-wider text-ops-cyan mb-1">
-                  Team ID (Unique)
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. 101 or TEAM-106"
-                  value={newTeamId}
-                  onChange={(e) => setNewTeamId(e.target.value.toUpperCase())}
-                  className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] uppercase tracking-wider text-ops-cyan mb-1">
-                  Domain Category
-                </label>
-                <select
-                  value={newTeamDomain}
-                  onChange={(e) => setNewTeamDomain(e.target.value as DomainCategory)}
-                  className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs"
-                >
-                  <option value="CSE_AIML">CSE / AIML</option>
-                  <option value="ECE">Electronics and Communication</option>
-                  <option value="MECH_CIVIL">Mechanical and Civil</option>
-                </select>
-              </div>
-
-              <div className="flex items-center gap-3 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setCreateTeamModal(false)}
-                  className="py-2.5 px-4 rounded-xl border border-ops-border bg-ops-card text-ops-textMuted text-xs font-bold"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-ops-cyan text-slate-950 text-xs font-bold shadow-cyan-glow"
-                >
-                  Create Account
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
       {/* MANUAL ASSIGN MODAL */}
       {manualAssignModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
@@ -1254,7 +1007,7 @@ export default function AdminPage() {
               Manual PS Assignment
             </h3>
             <p className="text-xs text-ops-textMuted mb-4">
-              Assign an existing team account directly to a PS code.
+              Directly allocate a problem statement code to any participating Team ID.
             </p>
 
             {manualAssignError && (
@@ -1285,22 +1038,16 @@ export default function AdminPage() {
 
               <div>
                 <label className="block text-[11px] uppercase tracking-wider text-ops-cyan mb-1">
-                  Select Team Account
+                  Team Identifier
                 </label>
-                <select
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. TEAM-101 or 101"
                   value={manualTeamId}
-                  onChange={(e) => setManualTeamId(e.target.value)}
+                  onChange={(e) => setManualTeamId(e.target.value.toUpperCase())}
                   className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs font-bold"
-                >
-                  <option value="">Choose a team...</option>
-                  {teams
-                    .filter((t) => t.ps_code === 'N/A')
-                    .map((t) => (
-                      <option key={t.id} value={t.team_id}>
-                        {t.team_id} ({t.domain})
-                      </option>
-                    ))}
-                </select>
+                />
               </div>
 
               <div className="flex items-center gap-3 pt-3">
@@ -1313,8 +1060,8 @@ export default function AdminPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={!manualTeamId}
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-ops-yellow text-slate-950 text-xs font-bold shadow-yellow-glow disabled:opacity-50"
+                  disabled={!manualTeamId.trim()}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-ops-cyan text-slate-950 text-xs font-bold shadow-cyan-glow disabled:opacity-50"
                 >
                   Confirm Assignment
                 </button>

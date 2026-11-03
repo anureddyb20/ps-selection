@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'VVCE Ideathon – Problem Statement Selection Portal',
-  description: 'Official portal for participating teams to select and reserve problem statement codes for VVCE Ideathon. Strictly 2 teams per PS code.',
-  keywords: 'VVCE, Ideathon, Problem Statements, Engineering, Hackathon, Vidyavardhaka',
+  title: 'Ideathon VVCE – Problem Statement Selection Portal',
+  description: 'Official portal for participating teams to select and reserve problem statement codes for Ideathon VVCE. Strictly 2 teams per PS code.',
+  keywords: 'Ideathon, VVCE, Problem Statements, Engineering, Hackathon, Vidyavardhaka',
 };
 
 export default function RootLayout({
