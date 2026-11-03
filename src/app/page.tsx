@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import TeamLogin from '@/components/TeamLogin';
+import TeamEntry from '@/components/TeamEntry';
 import TeamDashboardHeader from '@/components/TeamDashboardHeader';
 import DomainNav from '@/components/DomainNav';
 import PSCard from '@/components/PSCard';
@@ -10,12 +10,8 @@ import LockedSelectionView from '@/components/LockedSelectionView';
 import { PublicPSItem, DomainCategory, TeamPublicProfile } from '@/lib/types';
 import {
   Lock,
-  Layers,
-  Sparkles,
   ShieldAlert,
   Search,
-  CheckCircle2,
-  AlertCircle,
   Loader2,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -34,8 +30,8 @@ export default function HomePage() {
   const [searchFilter, setSearchFilter] = useState('');
   const [activeModalItem, setActiveModalItem] = useState<PublicPSItem | null>(null);
 
-  // Check team authentication session on mount
-  const checkTeamAuth = async () => {
+  // Check team session on mount
+  const checkTeamSession = async () => {
     try {
       const res = await fetch('/api/auth/team/me', { cache: 'no-store' });
       if (res.ok) {
@@ -59,7 +55,7 @@ export default function HomePage() {
     }
   };
 
-  // Fetch public problem statements
+  // Fetch problem statements
   const fetchPSData = async () => {
     try {
       const res = await fetch('/api/ps-codes', { cache: 'no-store' });
@@ -75,14 +71,13 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    checkTeamAuth();
+    checkTeamSession();
     fetchPSData();
 
-    // Setup Realtime SSE listener
     const eventSource = new EventSource('/api/realtime');
     eventSource.addEventListener('update', () => {
       fetchPSData();
-      checkTeamAuth();
+      checkTeamSession();
     });
 
     const interval = setInterval(fetchPSData, 6000);
@@ -93,12 +88,12 @@ export default function HomePage() {
     };
   }, []);
 
-  const handleLogout = async () => {
+  const handleSwitchTeam = async () => {
     await fetch('/api/auth/team/logout', { method: 'POST' });
     setCurrentTeam(null);
   };
 
-  const handleLoginSuccess = (team: TeamPublicProfile) => {
+  const handleTeamVerified = (team: TeamPublicProfile) => {
     setCurrentTeam(team);
     if (team.domain) {
       setSelectedDomain(team.domain);
@@ -113,8 +108,7 @@ export default function HomePage() {
       spread: 80,
       origin: { y: 0.6 },
     });
-    // Refresh state
-    checkTeamAuth();
+    checkTeamSession();
     fetchPSData();
   };
 
@@ -152,19 +146,19 @@ export default function HomePage() {
     return filteredItems.filter((item) => item.sub_domain === 'CIVIL');
   }, [filteredItems]);
 
-  // Loading screen during session check
+  // Loading screen during initial check
   if (authChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-ops-bg text-white font-mono text-xs">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-6 h-6 animate-spin text-ops-cyan" />
-          <span className="tracking-widest uppercase">INITIALIZING SELECTION DESK...</span>
+          <span className="tracking-widest uppercase">CONNECTING TO SELECTION DESK...</span>
         </div>
       </div>
     );
   }
 
-  // FLOW STEP 1: If NOT logged in, show Team Login
+  // FLOW STEP 1: If NO team entered, display Team ID Entry Screen
   if (!currentTeam) {
     return (
       <div className="min-h-screen bg-ops-bg text-slate-100 flex flex-col justify-between">
@@ -182,7 +176,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <TeamLogin onLoginSuccess={handleLoginSuccess} />
+        <TeamEntry onTeamVerified={handleTeamVerified} />
 
         <footer className="border-t border-ops-border py-6 px-6 text-center text-xs font-mono text-ops-textMuted bg-ops-panel/40">
           © 2026 Vidyavardhaka College of Engineering. All rights reserved. Max 2 teams per PS code.
@@ -191,14 +185,14 @@ export default function HomePage() {
     );
   }
 
-  // FLOW STEP 2: Team is Authenticated -> Show Team Dashboard
+  // FLOW STEP 2: Team ID is verified -> Display Team Dashboard
   const hasSelected = Boolean(currentTeam.selection);
 
   return (
     <div className="min-h-screen flex flex-col bg-ops-bg text-slate-100">
       <TeamDashboardHeader
         team={currentTeam}
-        onLogout={handleLogout}
+        onLogout={handleSwitchTeam}
         selectionOpen={selectionOpen}
         portalPublished={portalPublished}
       />
@@ -224,7 +218,7 @@ export default function HomePage() {
           </div>
         ) : null}
 
-        {/* Domain Navigation (Styling matches reference screenshot ACTIVE OPERATION MODE) */}
+        {/* Domain Navigation */}
         <DomainNav
           selectedDomain={selectedDomain}
           onSelectDomain={(d) => {

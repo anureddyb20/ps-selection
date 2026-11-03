@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateTeam, getTeamProfile } from '@/lib/db';
+import { lookupTeam, getTeamProfile } from '@/lib/db';
 import { createTeamSessionToken, TEAM_COOKIE_NAME } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -7,29 +7,29 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { team_id, password } = body;
+    const { team_id } = body;
 
-    if (!team_id || !password) {
+    if (!team_id) {
       return NextResponse.json(
-        { success: false, message: 'Team ID and Password are required.' },
+        { success: false, message: 'Invalid Team ID. Please enter a registered Team ID.' },
         { status: 400 }
       );
     }
 
-    const authResult = await authenticateTeam(team_id, password);
-    if (!authResult.success || !authResult.team) {
+    const lookupResult = await lookupTeam(team_id);
+    if (!lookupResult.success || !lookupResult.team) {
       return NextResponse.json(
-        { success: false, message: authResult.message || 'Invalid Team ID or Password.' },
-        { status: 401 }
+        { success: false, message: 'Invalid Team ID. Please enter a registered Team ID.' },
+        { status: 404 }
       );
     }
 
-    const token = createTeamSessionToken(authResult.team);
-    const profile = await getTeamProfile(authResult.team.id);
+    const token = createTeamSessionToken(lookupResult.team);
+    const profile = await getTeamProfile(lookupResult.team.id);
 
     const response = NextResponse.json({
       success: true,
-      message: 'Authentication successful.',
+      message: 'Team identified successfully.',
       team: profile,
     });
 
@@ -43,11 +43,10 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Team login error:', error);
+    console.error('Team verification error:', error);
     return NextResponse.json(
-      { success: false, message: 'An unexpected server error occurred during sign in.' },
+      { success: false, message: 'An unexpected server error occurred during lookup.' },
       { status: 500 }
     );
   }
 }
-

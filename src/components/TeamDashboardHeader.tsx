@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { TeamPublicProfile } from '@/lib/types';
-import { LogOut, CheckCircle2, AlertCircle, Wifi, User, Layers, Shield } from 'lucide-react';
+import { LogOut, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface TeamDashboardHeaderProps {
   team: TeamPublicProfile;
@@ -23,20 +23,20 @@ export default function TeamDashboardHeader({
     <header className="border-b border-ops-border bg-ops-panel/90 backdrop-blur-md sticky top-0 z-30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Left Title block matching reference image */}
+          {/* Left Title block */}
           <div>
             <div className="flex items-center gap-2 text-ops-cyan text-xs font-mono font-bold tracking-widest uppercase mb-1">
               <span>IDEATHON // PROBLEM STATEMENT DESK</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight uppercase">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight uppercase font-mono">
               Problem Statement Desk
             </h1>
             <p className="text-xs text-ops-textMuted mt-1 max-w-2xl font-mono">
-              Select one problem statement code from your domain. Maximum 2 teams per PS code. Selections are locked immediately.
+              Review domain-wise problem statement codes and confirm your team's single reservation.
             </p>
           </div>
 
-          {/* Right Status Badges matching reference screenshot */}
+          {/* Right Status Badges */}
           <div className="flex flex-wrap items-center gap-3">
             {/* Live Status Pill */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-ops-card border border-ops-border text-xs font-mono">
@@ -52,12 +52,12 @@ export default function TeamDashboardHeader({
               </span>
             </div>
 
-            {/* Team Identity Pill (styled after reference screenshot top buttons) */}
+            {/* Team Identity Pill */}
             <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-ops-card border border-ops-borderLight text-xs font-mono text-slate-200">
               <div className="w-2 h-2 rounded-full bg-ops-yellow" />
               <span className="font-bold text-ops-yellow">{team.team_id}</span>
               <span className="text-slate-400">|</span>
-              <span className="text-white font-medium max-w-[120px] truncate">{team.team_name}</span>
+              <span className="text-white font-medium max-w-[150px] truncate">{team.team_name}</span>
             </div>
 
             {/* Selection Status Badge */}
@@ -73,13 +73,14 @@ export default function TeamDashboardHeader({
               </div>
             )}
 
-            {/* Logout button */}
+            {/* Switch Team button */}
             <button
               onClick={onLogout}
-              className="p-2 rounded-xl bg-ops-card border border-ops-border text-ops-textMuted hover:text-ops-magenta hover:border-ops-magenta/40 transition-colors"
-              title="Sign Out"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-ops-card border border-ops-border text-ops-textMuted hover:text-ops-cyan hover:border-ops-cyan/40 transition-colors text-xs font-mono font-bold"
+              title="Change Team ID"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
+              <span>SWITCH TEAM</span>
             </button>
           </div>
         </div>
@@ -87,4 +88,3 @@ export default function TeamDashboardHeader({
     </header>
   );
 }
-

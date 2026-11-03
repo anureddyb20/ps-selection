@@ -251,10 +251,10 @@ function writeState(state: DatabaseState): void {
 }
 
 // ====================================================================
-// TEAM AUTHENTICATION METHODS
+// TEAM LOOKUP METHODS (NO PASSWORDS)
 // ====================================================================
 
-export async function authenticateTeam(teamIdInput: string, passwordInput: string): Promise<{
+export async function lookupTeam(teamIdInput: string): Promise<{
   success: boolean;
   message: string;
   team?: Team;
@@ -262,27 +262,30 @@ export async function authenticateTeam(teamIdInput: string, passwordInput: strin
   return withAtomicLock(() => {
     const state = readState();
     const cleanId = (teamIdInput || '').trim().toUpperCase();
-    const cleanPass = (passwordInput || '').trim();
 
-    if (!cleanId || !cleanPass) {
-      return { success: false, message: 'Team ID and Password are required.' };
+    if (!cleanId) {
+      return { success: false, message: 'Please enter your Team ID.' };
     }
 
     const team = state.teams.find((t) => t.team_id.toUpperCase() === cleanId);
     if (!team) {
-      return { success: false, message: 'Invalid Team ID or credentials. Contact event organizers.' };
-    }
-
-    if (!verifyPassword(cleanPass, team.password_hash)) {
-      return { success: false, message: 'Invalid Team ID or credentials. Access denied.' };
+      return { success: false, message: 'Invalid Team ID. Please enter a registered Team ID.' };
     }
 
     return {
       success: true,
-      message: 'Authentication successful.',
+      message: 'Team verified successfully.',
       team,
     };
   });
+}
+
+export async function authenticateTeam(teamIdInput: string, passwordInput?: string): Promise<{
+  success: boolean;
+  message: string;
+  team?: Team;
+}> {
+  return lookupTeam(teamIdInput);
 }
 
 export async function getTeamProfile(teamId: string): Promise<TeamPublicProfile | null> {

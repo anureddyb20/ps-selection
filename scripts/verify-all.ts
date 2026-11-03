@@ -1,6 +1,6 @@
 /**
  * VVCE IDEATHON: COMPREHENSIVE AUTOMATED VERIFICATION SCRIPT
- * Tests Team Authentication, PS Selection, 2-Team Capacity Limit, Concurrency, and Admin Operations
+ * Tests Team ID Entry, PS Selection, 2-Team Capacity Limit, Concurrency, and Admin Operations
  */
 
 import {
@@ -12,7 +12,7 @@ import {
   adminUpdateSettings,
   adminResetAllData,
   adminCreateTeam,
-  authenticateTeam,
+  lookupTeam,
   getTeamProfile,
 } from '../src/lib/db';
 import {
@@ -38,7 +38,7 @@ function assert(condition: boolean, testName: string, detail?: string) {
 
 async function runAllTests() {
   console.log('\n======================================================');
-  console.log('VVCE IDEATHON: EXHAUSTIVE VERIFICATION SUITE');
+  console.log('VVCE IDEATHON: TEAM ID LOOKUP & SELECTION VERIFICATION');
   console.log('======================================================\n');
 
   // Reset to clean pristine state
@@ -83,17 +83,23 @@ async function runAllTests() {
     sampleItem.sih_number === undefined;
   assert(isSanitized, 'Requirement 7: Participating teams see ONLY PS codes (titles/descriptions strictly hidden)');
 
-  // Test 8: Team Authentication
-  const validTeamAuth = await authenticateTeam('TEAM-101', 'vvce@2026');
-  assert(validTeamAuth.success && validTeamAuth.team?.team_id === 'TEAM-101', 'Requirement 8: Team Login with valid Team ID and password succeeds');
+  // Test 8: Team ID Lookup & Validation (No password)
+  const validLookup = await lookupTeam('TEAM-101');
+  assert(
+    validLookup.success && validLookup.team?.team_id === 'TEAM-101' && validLookup.team?.team_name === 'Neural Knights',
+    'Requirement 8: Valid Team ID lookup succeeds and retrieves team details'
+  );
 
-  const invalidTeamAuth = await authenticateTeam('TEAM-101', 'wrong_pass');
-  assert(!invalidTeamAuth.success, 'Requirement 8b: Team Login with invalid password rejected');
+  const invalidLookup = await lookupTeam('NONEXISTENT-TEAM');
+  assert(
+    !invalidLookup.success && invalidLookup.message === 'Invalid Team ID. Please enter a registered Team ID.',
+    'Requirement 8b: Invalid Team ID displays exact required message: "Invalid Team ID. Please enter a registered Team ID."'
+  );
 
   // Test 9: Team Session cryptographic token
-  const teamToken = createTeamSessionToken(validTeamAuth.team!);
+  const teamToken = createTeamSessionToken(validLookup.team!);
   const decodedSession = verifyTeamSessionToken(teamToken);
-  assert(decodedSession?.team_id === 'TEAM-101', 'Requirement 9: Team HTTP-only session token signs and verifies correctly');
+  assert(decodedSession?.team_id === 'TEAM-101', 'Requirement 9: Team session token signs and verifies correctly');
 
   // Test 10 & 11: Slot 1/2 and Slot 2/2 allocation
   const res1 = await reserveProblemStatementAtomic({
@@ -124,7 +130,6 @@ async function runAllTests() {
 
   // Test 14: Race Condition / Concurrency test
   console.log('Testing concurrency on EC-01 with simultaneous requests...');
-  // Create 4 temporary teams for concurrency test
   await adminCreateTeam({ team_id: 'CONC-1', team_name: 'Concurrent Team 1', password: 'pass', domain: 'ECE' });
   await adminCreateTeam({ team_id: 'CONC-2', team_name: 'Concurrent Team 2', password: 'pass', domain: 'ECE' });
   await adminCreateTeam({ team_id: 'CONC-3', team_name: 'Concurrent Team 3', password: 'pass', domain: 'ECE' });
