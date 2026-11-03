@@ -321,21 +321,31 @@
       "leader_name": "",
       "leader_email": "",
       "created_at": "2026-11-03T20:40:37.778Z"
+    },
+    {
+      "id": "team-103-mw15y8kl",
+      "team_id": "103",
+      "team_name": "103",
+      "password_hash": "",
+      "domain": "ECE",
+      "leader_name": "",
+      "leader_email": "",
+      "created_at": "2026-11-03T20:51:46.533Z"
     }
   ],
   "ps_selections": [
-    {
-      "id": "sel-1793736387415-227e5c",
-      "team_id": "team-101-mw14bt1v",
-      "problem_statement_id": "ps-me-02-27",
-      "selected_at": "2026-11-03T20:06:27.415Z",
-      "status": "CONFIRMED"
-    },
     {
       "id": "sel-1793738444565-8abcd4",
       "team_id": "team-102-mw15jwk2",
       "problem_statement_id": "ps-cs-03-3",
       "selected_at": "2026-11-03T20:40:44.565Z",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "sel-1793739116010-dd1870",
+      "team_id": "team-103-mw15y8kl",
+      "problem_statement_id": "ps-ec-08-23",
+      "selected_at": "2026-11-03T20:51:56.010Z",
       "status": "CONFIRMED"
     }
   ],
@@ -347,5 +357,5 @@
     "one_ps_per_team": true,
     "updated_at": "2026-11-03T20:18:21.917Z"
   },
-  "version": 5
+  "version": 8
 }

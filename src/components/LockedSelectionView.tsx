@@ -1,14 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { TeamPublicProfile } from '@/lib/types';
-import { CheckCircle2, Lock, Printer, ShieldCheck, Sparkles, Copy } from 'lucide-react';
+import { CheckCircle2, Lock, Printer, ShieldCheck, Sparkles, Copy, Check } from 'lucide-react';
 
 interface LockedSelectionViewProps {
   team: TeamPublicProfile;
 }
 
 export default function LockedSelectionView({ team }: LockedSelectionViewProps) {
+  const [copied, setCopied] = useState(false);
   const selection = team.selection;
   if (!selection) return null;
 
@@ -18,7 +19,8 @@ export default function LockedSelectionView({ team }: LockedSelectionViewProps) 
 
   const copyRefId = () => {
     navigator.clipboard.writeText(selection.id);
-    alert('Selection Reference ID copied!');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   return (
@@ -86,14 +88,21 @@ export default function LockedSelectionView({ team }: LockedSelectionViewProps) 
           </div>
           <div className="flex justify-between items-center">
             <span className="text-ops-textMuted">Selection ID:</span>
-            <div className="flex items-center gap-1.5 text-ops-cyan font-bold">
+            <div className="flex items-center gap-2 text-ops-cyan font-bold">
               <span>{selection.id}</span>
               <button
                 onClick={copyRefId}
-                title="Copy ID"
-                className="hover:text-white transition-colors print:hidden"
+                title="Copy Reference ID"
+                className="p-1 rounded hover:bg-ops-cardHover hover:text-white transition-colors print:hidden flex items-center gap-1 text-[11px]"
               >
-                <Copy className="w-3.5 h-3.5" />
+                {copied ? (
+                  <span className="text-ops-emerald flex items-center gap-1 font-bold">
+                    <Check className="w-3.5 h-3.5" />
+                    <span>COPIED</span>
+                  </span>
+                ) : (
+                  <Copy className="w-3.5 h-3.5 text-ops-textMuted hover:text-ops-cyan" />
+                )}
               </button>
             </div>
           </div>

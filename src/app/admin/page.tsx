@@ -81,6 +81,19 @@ export default function AdminPage() {
   const [manualTeamId, setManualTeamId] = useState('');
   const [manualAssignError, setManualAssignError] = useState<string | null>(null);
 
+  // Custom UI Modals (Zero native browser popups)
+  const [cancelModalItem, setCancelModalItem] = useState<{
+    selectionId: string;
+    teamCode: string;
+    psCode: string;
+  } | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
+
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resetInputPhrase, setResetInputPhrase] = useState('');
+  const [resetModalLoading, setResetModalLoading] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+
   // Notification Toast
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
@@ -188,14 +201,13 @@ export default function AdminPage() {
     }
   };
 
-  const handleCancelSelection = async (selectionId: string, teamName: string, psCode: string) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to cancel the reservation for "${teamName}" on PS Code ${psCode}? The slot will be reopened immediately.`
-      )
-    ) {
-      return;
-    }
+  const handleCancelSelection = (selectionId: string, teamCode: string, psCode: string) => {
+    setCancelModalItem({ selectionId, teamCode, psCode });
+  };
+
+  const executeCancelSelection = async () => {
+    if (!cancelModalItem) return;
+    setCancelLoading(true);
 
     try {
       const res = await fetch('/api/admin', {
@@ -203,16 +215,21 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'cancel-selection',
-          selection_id: selectionId,
+          selection_id: cancelModalItem.selectionId,
         }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        showToast(data.message);
+        showToast(data.message || `Slot cancelled for Team ${cancelModalItem.teamCode}.`);
+        setCancelModalItem(null);
         fetchDashboardData();
+      } else {
+        showToast(data.message || 'Failed to cancel slot.', 'error');
       }
     } catch {
       showToast('Network error while cancelling selection.', 'error');
+    } finally {
+      setCancelLoading(false);
     }
   };
 
@@ -266,14 +283,21 @@ export default function AdminPage() {
     }
   };
 
-  const handleResetAllData = async () => {
-    const confirmation = window.prompt(
-      'DANGER ZONE: Type "RESET-PORTAL" to wipe all selections and restore all 30 PS codes to 0/2 available.'
-    );
-    if (confirmation !== 'RESET-PORTAL') {
-      alert('Reset cancelled. Incorrect confirmation phrase.');
+  const handleOpenResetModal = () => {
+    setResetModalOpen(true);
+    setResetInputPhrase('');
+    setResetError(null);
+  };
+
+  const executeResetAllData = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (resetInputPhrase.trim() !== 'RESET-PORTAL') {
+      setResetError('Incorrect phrase. You must type "RESET-PORTAL" in uppercase to confirm.');
       return;
     }
+
+    setResetModalLoading(true);
+    setResetError(null);
 
     try {
       const res = await fetch('/api/admin', {
@@ -283,11 +307,17 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        showToast(data.message);
+        showToast(data.message || 'All selections wiped and restored to clean initial state.');
+        setResetModalOpen(false);
+        setResetInputPhrase('');
         fetchDashboardData();
+      } else {
+        setResetError(data.message || 'Failed to reset portal data.');
       }
     } catch {
-      showToast('Failed to reset portal data.', 'error');
+      setResetError('Network error while resetting portal data.');
+    } finally {
+      setResetModalLoading(false);
     }
   };
 
@@ -987,7 +1017,7 @@ export default function AdminPage() {
                 </div>
 
                 <button
-                  onClick={handleResetAllData}
+                  onClick={handleOpenResetModal}
                   className="px-4 py-2.5 rounded-xl bg-ops-magenta text-white font-bold text-xs uppercase tracking-wider shadow-magenta-glow flex items-center gap-2"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -1064,6 +1094,136 @@ export default function AdminPage() {
                   className="flex-1 py-2.5 px-4 rounded-xl bg-ops-cyan text-slate-950 text-xs font-bold shadow-cyan-glow disabled:opacity-50"
                 >
                   Confirm Assignment
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM UI CONFIRM CANCEL SELECTION MODAL (Zero browser popups) */}
+      {cancelModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in font-mono">
+          <div className="relative w-full max-w-md ops-panel border border-ops-border rounded-2xl p-6 shadow-2xl overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-ops-magenta to-transparent" />
+
+            <div className="flex items-start gap-3 mb-4">
+              <div className="p-2.5 rounded-xl ops-alert-rejected shrink-0">
+                <AlertTriangle className="w-5 h-5 text-ops-magenta" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Cancel Problem Statement Slot
+                </h3>
+                <p className="text-[11px] text-ops-textMuted mt-0.5">
+                  Action immediately frees this reserved slot.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-ops-card border border-ops-border text-xs space-y-2 mb-5">
+              <div className="flex justify-between items-center">
+                <span className="text-ops-textMuted">Team Identifier:</span>
+                <span className="font-bold text-ops-yellow">{cancelModalItem.teamCode}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-ops-textMuted">PS Code:</span>
+                <span className="font-bold text-ops-cyan">{cancelModalItem.psCode}</span>
+              </div>
+              <div className="pt-2 border-t border-ops-border/60 text-[11px] text-slate-300">
+                Are you sure you want to cancel this reservation? The slot will immediately become available for other participating teams.
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setCancelModalItem(null)}
+                disabled={cancelLoading}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-ops-border bg-ops-card text-ops-textMuted text-xs font-bold hover:text-white transition-colors"
+              >
+                Keep Slot
+              </button>
+              <button
+                type="button"
+                onClick={executeCancelSelection}
+                disabled={cancelLoading}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-ops-magenta text-white text-xs font-bold shadow-magenta-glow flex items-center justify-center gap-1.5 transition-all disabled:opacity-50"
+              >
+                {cancelLoading ? (
+                  <span>Cancelling...</span>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Confirm Cancel</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM UI EMERGENCY RESET MODAL (Zero browser popups) */}
+      {resetModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in font-mono">
+          <div className="relative w-full max-w-md ops-panel border border-ops-border rounded-2xl p-6 shadow-2xl overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-ops-magenta to-transparent" />
+
+            <div className="flex items-start gap-3 mb-4">
+              <div className="p-2.5 rounded-xl ops-alert-rejected shrink-0">
+                <Trash2 className="w-5 h-5 text-ops-magenta" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Emergency Portal Reset
+                </h3>
+                <p className="text-[11px] text-ops-textMuted mt-0.5">
+                  Destructive Organizer Operation // Irreversible
+                </p>
+              </div>
+            </div>
+
+            {resetError && (
+              <div className="ops-alert-rejected p-3 rounded-xl mb-4 text-xs text-slate-200">
+                {resetError}
+              </div>
+            )}
+
+            <form onSubmit={executeResetAllData} className="space-y-4">
+              <div className="p-3.5 rounded-xl bg-ops-card border border-ops-border text-xs text-slate-300 leading-relaxed">
+                This will permanently wipe all active team selections and restore all 30 Problem Statement codes back to pristine 0/2 available capacity.
+              </div>
+
+              <div>
+                <label className="block text-[11px] uppercase tracking-wider text-ops-magenta mb-1 font-bold">
+                  Type <span className="underline">RESET-PORTAL</span> to confirm:
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="RESET-PORTAL"
+                  value={resetInputPhrase}
+                  onChange={(e) => setResetInputPhrase(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white text-xs font-bold tracking-wider"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setResetModalOpen(false)}
+                  disabled={resetModalLoading}
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-ops-border bg-ops-card text-ops-textMuted text-xs font-bold hover:text-white transition-colors"
+                >
+                  Abort
+                </button>
+                <button
+                  type="submit"
+                  disabled={resetModalLoading || resetInputPhrase.trim() !== 'RESET-PORTAL'}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-ops-magenta text-white text-xs font-bold shadow-magenta-glow disabled:opacity-40 transition-all flex items-center justify-center gap-1.5"
+                >
+                  {resetModalLoading ? <span>Wiping...</span> : <span>Confirm Wipe</span>}
                 </button>
               </div>
             </form>
