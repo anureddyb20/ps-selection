@@ -1,0 +1,315 @@
+{
+  "problem_statements": [
+    {
+      "id": "ps-cs-01-1",
+      "ps_code": "CS-01",
+      "domain": "CSE_AIML",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-cs-02-2",
+      "ps_code": "CS-02",
+      "domain": "CSE_AIML",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-cs-03-3",
+      "ps_code": "CS-03",
+      "domain": "CSE_AIML",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-cs-04-4",
+      "ps_code": "CS-04",
+      "domain": "CSE_AIML",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-cs-05-5",
+      "ps_code": "CS-05",
+      "domain": "CSE_AIML",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-cs-06-6",
+      "ps_code": "CS-06",
+      "domain": "CSE_AIML",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-cs-07-7",
+      "ps_code": "CS-07",
+      "domain": "CSE_AIML",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-cs-08-8",
+      "ps_code": "CS-08",
+      "domain": "CSE_AIML",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-cs-09-9",
+      "ps_code": "CS-09",
+      "domain": "CSE_AIML",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-cs-10-10",
+      "ps_code": "CS-10",
+      "domain": "CSE_AIML",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-cs-11-11",
+      "ps_code": "CS-11",
+      "domain": "CSE_AIML",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-cs-12-12",
+      "ps_code": "CS-12",
+      "domain": "CSE_AIML",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-cs-13-13",
+      "ps_code": "CS-13",
+      "domain": "CSE_AIML",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-cs-14-14",
+      "ps_code": "CS-14",
+      "domain": "CSE_AIML",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-cs-15-15",
+      "ps_code": "CS-15",
+      "domain": "CSE_AIML",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-ec-01-16",
+      "ps_code": "EC-01",
+      "domain": "ECE",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-ec-02-17",
+      "ps_code": "EC-02",
+      "domain": "ECE",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-ec-03-18",
+      "ps_code": "EC-03",
+      "domain": "ECE",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-ec-04-19",
+      "ps_code": "EC-04",
+      "domain": "ECE",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-ec-05-20",
+      "ps_code": "EC-05",
+      "domain": "ECE",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-ec-06-21",
+      "ps_code": "EC-06",
+      "domain": "ECE",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-ec-07-22",
+      "ps_code": "EC-07",
+      "domain": "ECE",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-ec-08-23",
+      "ps_code": "EC-08",
+      "domain": "ECE",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-ec-09-24",
+      "ps_code": "EC-09",
+      "domain": "ECE",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-ec-10-25",
+      "ps_code": "EC-10",
+      "domain": "ECE",
+      "sub_domain": null,
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-me-01-26",
+      "ps_code": "ME-01",
+      "domain": "MECH_CIVIL",
+      "sub_domain": "MECHANICAL",
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-me-02-27",
+      "ps_code": "ME-02",
+      "domain": "MECH_CIVIL",
+      "sub_domain": "MECHANICAL",
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-me-03-28",
+      "ps_code": "ME-03",
+      "domain": "MECH_CIVIL",
+      "sub_domain": "MECHANICAL",
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-ce-01-29",
+      "ps_code": "CE-01",
+      "domain": "MECH_CIVIL",
+      "sub_domain": "CIVIL",
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    },
+    {
+      "id": "ps-ce-02-30",
+      "ps_code": "CE-02",
+      "domain": "MECH_CIVIL",
+      "sub_domain": "CIVIL",
+      "is_published": true,
+      "is_selection_open": true,
+      "created_at": "2026-11-03T18:38:33.529Z",
+      "updated_at": "2026-11-03T18:38:33.529Z"
+    }
+  ],
+  "teams": [],
+  "ps_selections": [],
+  "admin_settings": {
+    "id": 1,
+    "portal_published": true,
+    "selection_open": true,
+    "max_teams_per_ps": 2,
+    "one_ps_per_team": true,
+    "updated_at": "2026-11-03T18:38:33.529Z"
+  },
+  "version": 2
+}
