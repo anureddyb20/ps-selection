@@ -146,10 +146,10 @@ export default function HomePage() {
   // Loading screen during initial check
   if (authChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-ops-bg text-white font-mono text-xs">
+      <div className="min-h-screen flex items-center justify-center bg-black text-white font-sans text-xs">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-6 h-6 animate-spin text-ops-cyan" />
-          <span className="tracking-widest uppercase">CONNECTING TO SELECTION DESK...</span>
+          <Loader2 className="w-6 h-6 animate-spin text-[#FF007F]" />
+          <span className="tracking-widest uppercase font-mono text-zinc-400">CONNECTING TO SELECTION DESK...</span>
         </div>
       </div>
     );
@@ -158,16 +158,16 @@ export default function HomePage() {
   // FLOW STEP 1: If NO team entered, display Team ID Entry Screen
   if (!currentTeam) {
     return (
-      <div className="min-h-screen bg-ops-bg text-slate-100 flex flex-col justify-between">
-        <div className="border-b border-ops-border py-4 px-6 bg-ops-panel/60">
+      <div className="min-h-screen bg-black text-zinc-100 flex flex-col justify-between">
+        <div className="border-b border-zinc-800/80 py-4 px-6 bg-[#080808]">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-ops-cyan shadow-cyan-glow" />
-              <span className="font-mono font-bold text-sm tracking-wider text-white">
-                PROBLEM STATEMENT SELECTION PORTAL
+              <span className="w-2 h-2 rounded-full bg-[#FF007F] shadow-[0_0_8px_#FF007F]" />
+              <span className="font-sans font-black text-sm tracking-wide text-white uppercase">
+                PROBLEM STATEMENT SELECTION
               </span>
             </div>
-            <span className="text-[11px] font-mono text-ops-textMuted uppercase tracking-widest hidden sm:inline-block">
+            <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-widest hidden sm:inline-block">
               VICE VERSE 2026
             </span>
           </div>
@@ -175,8 +175,8 @@ export default function HomePage() {
 
         <TeamEntry onTeamVerified={handleTeamVerified} />
 
-        <footer className="border-t border-ops-border py-6 px-6 text-center text-xs font-mono text-ops-textMuted bg-ops-panel/40">
-          © 2026 Vidyavardhaka College of Engineering. All rights reserved. Max 2 teams per PS code.
+        <footer className="border-t border-zinc-800/80 py-6 px-6 text-center text-xs font-sans text-zinc-500 bg-[#080808]">
+          © 2026 Vice Verse Ideathon. All rights reserved. Max 2 teams per PS code.
         </footer>
       </div>
     );
@@ -187,7 +187,7 @@ export default function HomePage() {
   // The catalog of PS codes is completely hidden so team cannot select again
   if (currentTeam.selection) {
     return (
-      <div className="min-h-screen flex flex-col bg-ops-bg text-slate-100">
+      <div className="min-h-screen flex flex-col bg-black text-zinc-100">
         <TeamDashboardHeader
           team={currentTeam}
           onLogout={handleSwitchTeam}
@@ -199,10 +199,10 @@ export default function HomePage() {
           <LockedSelectionView team={currentTeam} />
         </main>
 
-        <footer className="border-t border-ops-border py-8 px-6 text-xs font-mono text-ops-textMuted bg-ops-panel mt-16">
+        <footer className="border-t border-zinc-800/80 py-8 px-6 text-xs font-sans text-zinc-500 bg-[#080808] mt-16">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <p>© 2026 Vice Verse Problem Statement Selection Desk.</p>
-            <p className="text-slate-500">Atomic PostgreSQL Enforced • Real-time Synchronized</p>
+            <p className="text-zinc-600 font-mono text-[11px]">Atomic PostgreSQL Enforced • Real-time Synchronized</p>
           </div>
         </footer>
       </div>
@@ -212,7 +212,7 @@ export default function HomePage() {
   const hasSelected = false;
 
   return (
-    <div className="min-h-screen flex flex-col bg-ops-bg text-slate-100">
+    <div className="min-h-screen flex flex-col bg-black text-zinc-100">
       <TeamDashboardHeader
         team={currentTeam}
         onLogout={handleSwitchTeam}
@@ -225,16 +225,16 @@ export default function HomePage() {
         {/* Global Notices if paused */}
         {!portalPublished ? (
           <div className="mb-6 p-4 rounded-xl ops-alert-rejected text-xs flex items-center gap-3">
-            <Lock className="w-5 h-5 text-ops-magenta shrink-0" />
-            <span className="font-mono text-slate-200">
-              <strong className="text-ops-magenta">PORTAL UNPUBLISHED:</strong> The selection portal is currently offline. Selections are temporarily suspended.
+            <Lock className="w-5 h-5 text-[#FF007F] shrink-0" />
+            <span className="font-sans text-zinc-200">
+              <strong className="text-[#FF007F]">PORTAL UNPUBLISHED:</strong> The selection portal is currently offline. Selections are temporarily suspended.
             </span>
           </div>
         ) : !selectionOpen ? (
-          <div className="mb-6 p-4 rounded-xl bg-ops-yellow/10 border border-ops-yellow/30 text-xs flex items-center gap-3">
-            <ShieldAlert className="w-5 h-5 text-ops-yellow shrink-0" />
-            <span className="font-mono text-slate-200">
-              <strong className="text-ops-yellow">SELECTION PAUSED:</strong> Organizers have temporarily paused new reservations.
+          <div className="mb-6 p-4 rounded-xl bg-[#120308] border border-[#FF007F]/40 text-xs flex items-center gap-3">
+            <ShieldAlert className="w-5 h-5 text-[#FF007F] shrink-0" />
+            <span className="font-sans text-zinc-200">
+              <strong className="text-[#FF007F]">SELECTION PAUSED:</strong> Organizers have temporarily paused new reservations.
             </span>
           </div>
         ) : null}
@@ -250,14 +250,15 @@ export default function HomePage() {
         />
 
         {/* Section Header & Search */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-ops-border mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800/80 mb-6">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono uppercase tracking-widest text-ops-cyan">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FF007F] shadow-[0_0_6px_#FF007F]" />
+              <span className="text-[11px] font-mono uppercase tracking-widest text-zinc-400 font-bold">
                 DOMAIN INVENTORY
               </span>
             </div>
-            <h2 className="text-xl font-mono font-bold text-white uppercase tracking-wider mt-0.5">
+            <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight font-sans mt-0.5">
               {selectedDomain === 'CSE_AIML' && 'CSE / AIML Problem Statements (15 Codes)'}
               {selectedDomain === 'ECE' && 'Electronics & Communication Codes (10 Codes)'}
               {selectedDomain === 'MECH_CIVIL' && 'Mechanical & Civil Codes (5 Codes)'}
@@ -265,14 +266,14 @@ export default function HomePage() {
           </div>
 
           {/* Search Input */}
-          <div className="relative w-full sm:w-60">
-            <Search className="w-4 h-4 text-ops-textMuted absolute left-3 top-1/2 -translate-y-1/2" />
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search code (e.g. CS-01)"
               value={searchFilter}
               onChange={(e) => setSearchFilter(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 rounded-xl bg-ops-card border border-ops-border text-white placeholder-slate-600 text-xs font-mono focus:outline-none focus:border-ops-cyan focus:ring-1 focus:ring-ops-cyan"
+              className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#0d0d0f] border border-zinc-800 text-white placeholder-zinc-500 text-xs font-mono focus:outline-none focus:border-[#FF007F] focus:ring-1 focus:ring-[#FF007F] uppercase tracking-wider transition-colors"
             />
           </div>
         </div>
@@ -282,8 +283,8 @@ export default function HomePage() {
           <div className="space-y-10">
             {/* Mechanical Engineering Subcategory */}
             <div>
-              <div className="flex items-center gap-2 mb-4 font-mono text-xs uppercase tracking-wider text-ops-yellow font-bold">
-                <span className="w-2 h-2 rounded-full bg-ops-yellow" />
+              <div className="flex items-center gap-2 mb-4 font-sans text-xs uppercase tracking-wider text-white font-bold">
+                <span className="w-2 h-2 rounded-full bg-[#FF007F] shadow-[0_0_8px_#FF007F]" />
                 <span>Mechanical Engineering (3 Problem Statements: ME-01, ME-02, ME-03)</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -301,8 +302,8 @@ export default function HomePage() {
 
             {/* Civil Engineering Subcategory */}
             <div>
-              <div className="flex items-center gap-2 mb-4 font-mono text-xs uppercase tracking-wider text-ops-cyan font-bold">
-                <span className="w-2 h-2 rounded-full bg-ops-cyan" />
+              <div className="flex items-center gap-2 mb-4 font-sans text-xs uppercase tracking-wider text-white font-bold">
+                <span className="w-2 h-2 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
                 <span>Civil Engineering (2 Problem Statements: CE-01, CE-02)</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -343,10 +344,10 @@ export default function HomePage() {
         />
       )}
 
-      <footer className="border-t border-ops-border py-8 px-6 text-xs font-mono text-ops-textMuted bg-ops-panel mt-16">
+      <footer className="border-t border-zinc-800/80 py-8 px-6 text-xs font-sans text-zinc-500 bg-[#080808] mt-16">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© 2026 Vice Verse Problem Statement Selection Desk.</p>
-          <p className="text-slate-500">Atomic PostgreSQL Enforced • Real-time Synchronized</p>
+          <p className="text-zinc-600 font-mono text-[11px]">Atomic PostgreSQL Enforced • Real-time Synchronized</p>
         </div>
       </footer>
     </div>

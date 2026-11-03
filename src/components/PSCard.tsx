@@ -23,12 +23,12 @@ export default function PSCard({
 
   return (
     <div
-      className={`ops-card rounded-xl p-5 border flex flex-col justify-between transition-all ${
+      className={`rounded-xl p-5 border flex flex-col justify-between transition-all bg-[#0d0d0f] ${
         isFull
-          ? 'opacity-60 border-ops-border/60'
+          ? 'opacity-60 border-zinc-850'
           : isOneSlotLeft
-          ? 'border-ops-yellow/30 hover:border-ops-yellow/60'
-          : 'hover:border-ops-cyan/50'
+          ? 'border-[#FF007F]/40 hover:border-[#FF007F]/80 shadow-[0_0_15px_rgba(255,0,127,0.08)]'
+          : 'border-zinc-800 hover:border-zinc-700'
       }`}
     >
       <div>
@@ -40,17 +40,17 @@ export default function PSCard({
 
           {/* Status Badge */}
           {isFull ? (
-            <span className="ops-badge-magenta px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1">
+            <span className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 bg-zinc-900 border border-zinc-800 text-zinc-500">
               <XCircle className="w-3 h-3" />
               <span>FULL</span>
             </span>
           ) : isOneSlotLeft ? (
-            <span className="ops-badge-yellow px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1">
+            <span className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 bg-[#FF007F]/12 border border-[#FF007F]/40 text-[#FF007F]">
               <AlertCircle className="w-3 h-3" />
               <span>ONE SLOT LEFT</span>
             </span>
           ) : (
-            <span className="ops-badge-cyan px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1">
+            <span className="px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 bg-white/5 border border-zinc-700/60 text-zinc-300">
               <CheckCircle2 className="w-3 h-3" />
               <span>AVAILABLE</span>
             </span>
@@ -58,16 +58,16 @@ export default function PSCard({
         </div>
 
         {/* Slot Progress */}
-        <div className="p-3 rounded-lg bg-ops-panel border border-ops-border/60 mb-5">
+        <div className="p-3 rounded-lg bg-[#080808] border border-zinc-800/80 mb-5">
           <div className="flex items-center justify-between text-xs font-mono mb-2">
-            <span className="text-ops-textMuted">Occupancy</span>
+            <span className="text-zinc-500">Occupancy</span>
             <span
               className={`font-bold ${
                 isFull
-                  ? 'text-ops-magenta'
+                  ? 'text-zinc-500'
                   : isOneSlotLeft
-                  ? 'text-ops-yellow'
-                  : 'text-ops-cyan'
+                  ? 'text-[#FF007F]'
+                  : 'text-white'
               }`}
             >
               {item.occupied_count} / {item.max_teams} Teams
@@ -84,9 +84,9 @@ export default function PSCard({
                   className={`h-2 rounded-sm transition-all ${
                     filled
                       ? isFull
-                        ? 'bg-ops-magenta'
-                        : 'bg-ops-yellow'
-                      : 'bg-ops-border'
+                        ? 'bg-zinc-600'
+                        : 'bg-[#FF007F] shadow-[0_0_8px_rgba(255,0,127,0.5)]'
+                      : 'bg-zinc-800'
                   }`}
                 />
               );
@@ -100,7 +100,7 @@ export default function PSCard({
         {canSelect ? (
           <button
             onClick={() => onSelect(item)}
-            className="w-full py-2.5 px-4 rounded-xl font-mono font-bold text-xs uppercase tracking-wider bg-ops-cyan/15 hover:bg-ops-cyan text-ops-cyan hover:text-slate-950 border border-ops-cyan/40 hover:border-ops-cyan transition-all flex items-center justify-center gap-2 group active:scale-[0.99]"
+            className="w-full py-2.5 px-4 rounded-xl font-sans font-bold text-xs uppercase tracking-wider bg-[#FF007F] hover:bg-[#ff1a8c] text-white shadow-[0_0_20px_rgba(255,0,127,0.35)] hover:shadow-[0_0_25px_rgba(255,0,127,0.5)] transition-all flex items-center justify-center gap-2 group active:scale-[0.99]"
           >
             <span>SELECT CODE</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
@@ -108,21 +108,21 @@ export default function PSCard({
         ) : isFull ? (
           <button
             disabled
-            className="w-full py-2.5 px-4 rounded-xl font-mono text-xs uppercase tracking-wider bg-ops-panel text-slate-600 border border-ops-border/40 cursor-not-allowed flex items-center justify-center gap-1.5"
+            className="w-full py-2.5 px-4 rounded-xl font-sans text-xs uppercase tracking-wider bg-[#080808] text-zinc-600 border border-zinc-800/60 cursor-not-allowed flex items-center justify-center gap-1.5"
           >
             <span>CAPACITY REACHED</span>
           </button>
         ) : teamAlreadySelected ? (
           <button
             disabled
-            className="w-full py-2.5 px-4 rounded-xl font-mono text-xs uppercase tracking-wider bg-ops-panel text-slate-500 border border-ops-border/40 cursor-not-allowed flex items-center justify-center gap-1.5"
+            className="w-full py-2.5 px-4 rounded-xl font-sans text-xs uppercase tracking-wider bg-[#080808] text-zinc-600 border border-zinc-800/60 cursor-not-allowed flex items-center justify-center gap-1.5"
           >
             <span>LOCKED (1 PS LIMIT)</span>
           </button>
         ) : (
           <button
             disabled
-            className="w-full py-2.5 px-4 rounded-xl font-mono text-xs uppercase tracking-wider bg-ops-panel text-slate-500 border border-ops-border/40 cursor-not-allowed flex items-center justify-center gap-1.5"
+            className="w-full py-2.5 px-4 rounded-xl font-sans text-xs uppercase tracking-wider bg-[#080808] text-zinc-600 border border-zinc-800/60 cursor-not-allowed flex items-center justify-center gap-1.5"
           >
             <span>DESK PAUSED</span>
           </button>

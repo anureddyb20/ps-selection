@@ -4,81 +4,95 @@
 
 @layer base {
   body {
-    background-color: #050608;
-    color: #f1f5f9;
+    background-color: #000000;
+    color: #ffffff;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     min-height: 100vh;
   }
 }
 
-/* Custom Scrollbars */
+/* Custom Minimalist Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #08090e;
+  background: #000000;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e2230;
+  background: #1f1f23;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2a3042;
+  background: #2e2e34;
 }
 
 /* Reference UI components */
 .ops-panel {
-  background-color: #0b0c12;
-  border: 1px solid #1e2230;
+  background-color: #080808;
+  border: 1px solid #1f1f23;
 }
 
 .ops-card {
-  background-color: #10121a;
-  border: 1px solid #1e2230;
-  transition: all 0.15s ease-in-out;
+  background-color: #0d0d0f;
+  border: 1px solid #1f1f23;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .ops-card:hover {
-  background-color: #161924;
-  border-color: #2a3042;
+  background-color: #141417;
+  border-color: #2e2e34;
 }
 
 .ops-card-active {
-  border-color: #ffd000 !important;
-  background-color: #141620 !important;
-  box-shadow: 0 0 15px -3px rgba(255, 208, 0, 0.25);
+  border-color: #FF007F !important;
+  background-color: #12040a !important;
+  box-shadow: 0 0 20px -2px rgba(255, 0, 127, 0.35);
 }
 
 .ops-alert-rejected {
-  background-color: #1a0713;
-  border: 1px solid #ff007a;
-  box-shadow: 0 0 15px -3px rgba(255, 0, 122, 0.2);
-}
-
-.ops-badge-cyan {
-  color: #00e5f2;
-  background: rgba(0, 229, 242, 0.1);
-  border: 1px solid rgba(0, 229, 242, 0.25);
-}
-
-.ops-badge-yellow {
-  color: #ffd000;
-  background: rgba(255, 208, 0, 0.1);
-  border: 1px solid rgba(255, 208, 0, 0.25);
+  background-color: #120308;
+  border: 1px solid #FF007F;
+  box-shadow: 0 0 20px -2px rgba(255, 0, 127, 0.25);
 }
 
 .ops-badge-magenta {
-  color: #ff007a;
-  background: rgba(255, 0, 122, 0.1);
-  border: 1px solid rgba(255, 0, 122, 0.25);
+  color: #FF007F;
+  background: rgba(255, 0, 127, 0.12);
+  border: 1px solid rgba(255, 0, 127, 0.35);
+}
+
+.ops-badge-cyan {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.ops-badge-yellow {
+  color: #FF007F;
+  background: rgba(255, 0, 127, 0.12);
+  border: 1px solid rgba(255, 0, 127, 0.35);
 }
 
 .ops-badge-emerald {
-  color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #34d399;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* Primary Vibrant Magenta Button */
+.btn-magenta {
+  background-color: #FF007F;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 0 25px -2px rgba(255, 0, 127, 0.4);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-magenta:hover {
+  background-color: #ff1a8c;
+  box-shadow: 0 0 30px rgba(255, 0, 127, 0.55);
 }
